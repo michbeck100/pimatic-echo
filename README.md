@@ -1,2 +1,2 @@
 # pimatic-echo
-Pimatic plugin that integrates Amazons smart home skill
+Pimatic smart home skill for your Amazon Echo (inspired by https://github.com/madgeni/alexa_domo)
