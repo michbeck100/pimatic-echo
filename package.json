@@ -1,0 +1,29 @@
+{
+  "name": "pimatic-echo",
+  "description": "Amazon smart home skill for pimatic",
+  "author": "Michael Kotten <michaelkotten@gmail.com> (https://github.com/michbeck100/pimatic-echo)",
+  "version": "0.0.1",
+  "files": [
+    "skill.js",
+    "LICENSE",
+    "README.md"
+  ],
+  "homepage": "https://github.com/michbeck100/pimatic-echo",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/michbeck100/pimatic-echo.git"
+  },
+  "engines": {
+    "node": ">4.4.x"
+  },
+  "dependencies": {
+    "extend": "^3.0.0",
+    "lodash": "^4.17.2",
+    "request": "^2.79.0",
+    "urijs": "^1.18.4"
+  },
+  "devDependencies": {
+    "pimatic": "~0.9.0"
+  }
+}
