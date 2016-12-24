@@ -4,6 +4,7 @@
   "author": "Michael Kotten <michaelkotten@gmail.com> (https://github.com/michbeck100/pimatic-echo)",
   "main": "echo.coffee",
   "files": [
+    "test",
     "echo.coffee",
     "README.md",
     "echo-config-schema.coffee",
@@ -17,6 +18,9 @@
     "url": "git://github.com/michbeck100/pimatic-echo.git"
   },
   "configSchema": "echo-config-schema.coffee",
+  "scripts": {
+    "test": "grunt test"
+  },
   "dependencies": {
     "fauxmojs": "michbeck100/fauxmojs"
   },
@@ -36,7 +40,7 @@
     "pimatic": "~0.9.0"
   },
   "engines": {
-    "node": ">4.4.x",
-    "npm": ">2.15.x"
+    "node": ">4.4",
+    "npm": ">2.15"
   }
 }

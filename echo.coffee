@@ -27,16 +27,16 @@ module.exports = (env) =>
         if @isSupported(device)
           port = port + 1
           devices.push({
-              name: device.name,
-              port: port,
-              handler: (action) =>
-                env.logger.debug("switching #{device.name} #{action}")
-                if (action == 'on')
-                  @turnOn(device)
-                else if (action == 'off')
-                  @turnOff(device)
-                else
-                  throw new Error("unsupported action: #{action}")
+            name: device.name,
+            port: port,
+            handler: (action) =>
+              env.logger.debug("switching #{device.name} #{action}")
+              if (action == 'on')
+                @turnOn(device)
+              else if (action == 'off')
+                @turnOff(device)
+              else
+                throw new Error("unsupported action: #{action}")
           })
           env.logger.debug("successfully added device " + device.name)
 
