@@ -45,7 +45,6 @@ module.exports = (env) =>
         )
 
     isSupported: (device) =>
-      env.logger.debug "check #{device.template}. isSuported: #{device.template in @knownTemplates}"
       return device.template in @knownTemplates
 
   plugin = new EchoPlugin()
