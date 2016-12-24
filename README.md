@@ -1,2 +1,3 @@
 # pimatic-echo
-Pimatic smart home skill for your Amazon Echo (inspired by https://github.com/madgeni/alexa_domo)
+Pimatic plugin that enables Amazon's echo to control pimatic devices. 
+Currently just switches are supported.
