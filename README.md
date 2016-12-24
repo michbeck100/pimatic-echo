@@ -1,3 +1,50 @@
+[![Build Status](http://img.shields.io/travis/michbeck100/pimatic-echo/master.svg)](https://travis-ci.org/michbeck100/pimatic-echo)
+[![Version](https://img.shields.io/npm/v/pimatic-echo.svg)](https://img.shields.io/npm/v/pimatic-echo.svg)
+[![downloads][downloads-image]][downloads-url]
+
+[downloads-image]: https://img.shields.io/npm/dm/pimatic-echo.svg?style=flat
+[downloads-url]: https://npmjs.org/package/pimatic-echo
+
+
 # pimatic-echo
-Pimatic plugin that enables Amazon's echo to control pimatic devices. 
-Currently just switches are supported.
+pimatic-echo is a [pimatic](https://github.com/pimatic/pimatic) plugin that enables Amazon's echo to control pimatic devices. It does this by simulating WeMo switches, which are natively supported by the echo. All network communication happens on the local network, so pimatic doesn't have to be accessible from the internet.
+
+Currently it supports just switching on and off, since a WeMo switch also just supports this.
+
+These device classes are supported currently:
+* DummySwitch
+* DummyDimmer
+* ButtonsDevice (just the first defined button)
+* All devices extending from ShutterController (Shutters will go up when switched on and vice versa)
+* All lights from [pimatic-led-light](https://github.com/philip1986/pimatic-led-light) and [pimatic-hue-zll](https://github.com/markbergsma/pimatic-hue-zll)
+
+If you are the developer of a pimatic plugin that defines a device class, that implements switch functionality, just create a [feature request](https://github.com/michbeck100/pimatic-echo/issues/new).
+
+#### Installation
+
+To install the plugin just add the plugin to the config.json of pimatic:
+
+```json
+    {
+      "plugin": "echo"   
+    }
+```
+
+This will fetch the most recent version from npm-registry on the next pimatic start and install the plugin.
+
+After that you tell your Amazon echo to search for your devices or use the [web frontend](http://alexa.amazon.de/spa/index.html#smart-home). 
+
+### Sponsoring
+
+Do you like this plugin? Then consider a donation to support development.
+
+<span class="badge-paypal"><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=2T48JXA589B4Y" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
+[![Flattr pimatic-hap](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=michbeck100&url=https://github.com/michbeck100/pimatic-echo&title=pimatic-echo&language=&tags=github&category=software)
+
+### Changelog
+
+0.0.2
+* minor bugfixes
+
+0.0.1
+* initial release

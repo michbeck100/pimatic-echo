@@ -31,7 +31,12 @@ module.exports = (env) =>
               port: port,
               handler: (action) =>
                 env.logger.debug("switching #{device.name} #{action}")
-                device.changeStateTo(action == 'on' ? on : off)
+                if (action == 'on')
+                  @turnOn(device)
+                else if (action == 'off')
+                  @turnOff(device)
+                else
+                  throw new Error("unsupported action: #{action}")
           })
           env.logger.debug("successfully added device " + device.name)
 
@@ -46,6 +51,18 @@ module.exports = (env) =>
 
     isSupported: (device) =>
       return device.template in @knownTemplates
+
+    turnOn: (device) =>
+      switch device.template
+        when "shutter" then device.moveUp()
+        when "buttons" then device.buttonPressed(device.config.buttons[0])
+        else device.turnOn()
+
+    turnOff: (device) =>
+      switch device.template
+        when "shutter" then device.moveDown()
+        when "buttons" then env.logger.info("A ButtonsDevice doesn't support switching off")
+        else device.turnOff()
 
   plugin = new EchoPlugin()
 
