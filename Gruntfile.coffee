@@ -6,7 +6,6 @@ module.exports = (grunt) ->
     coffeelint:
       app: [
         "*.coffee"
-        "accessories/**/*.coffee"
         "test/**/*.coffee"
       ]
       options:
@@ -46,8 +45,6 @@ module.exports = (grunt) ->
 
     blanket(
       pattern: (file) ->
-        if file.match "pimatic-hap/accessories" then return true
-        #if file.match "pimatic/node_modules" then return false
         withoutPrefix = file.replace(/.*\/node_modules\/pimatic/, "")
         return (not withoutPrefix.match 'node_modules') and (not withoutPrefix.match "/test/")
       loader: "./node-loaders/coffee-script"

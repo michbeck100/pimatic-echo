@@ -24,7 +24,7 @@ module.exports = (env) =>
       port = 12000
 
       @framework.on 'deviceAdded', (device) =>
-        if @isSupported(device)
+        if @isSupported(device) and not @isExcluded(device)
           port = port + 1
           devices.push({
             name: device.name,
@@ -51,6 +51,11 @@ module.exports = (env) =>
 
     isSupported: (device) =>
       return device.template in @knownTemplates
+
+    isExcluded: (device) =>
+      if device.config.echo?.exclude?
+        return device.config.echo.exclude
+      return false
 
     turnOn: (device) =>
       switch device.template

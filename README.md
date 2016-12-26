@@ -32,7 +32,27 @@ To install the plugin just add the plugin to the config.json of pimatic:
 
 This will fetch the most recent version from npm-registry on the next pimatic start and install the plugin.
 
-After that you tell your Amazon echo to search for your devices or use the [web frontend](http://alexa.amazon.de/spa/index.html#smart-home). 
+After that you tell your Amazon echo to search for your devices or use the [web frontend](http://alexa.amazon.de/spa/index.html#smart-home).
+
+#### Configuration
+The configuration of pimatic can be extended by adding an attribute called "echo" on every supported device.
+
+Example:
+
+```json
+"devices": [
+  {
+    "id": "switch",
+    "class": "DummySwitch",
+    "name": "Switch",
+    "echo": {
+      "exclude": true
+    }
+  }
+]
+
+```
+To exclude devices from being available to Alexa, just set the "exclude" flag to true. By default all supported devices will be available.
 
 ### Sponsoring
 
@@ -42,6 +62,9 @@ Do you like this plugin? Then consider a donation to support development.
 [![Flattr pimatic-hap](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=michbeck100&url=https://github.com/michbeck100/pimatic-echo&title=pimatic-echo&language=&tags=github&category=software)
 
 ### Changelog
+
+0.0.3
+* [#5](https://github.com/michbeck100/pimatic-echo/issues/5) Exclude specific devices from being available to Alexa.
 
 0.0.2
 * minor bugfixes
