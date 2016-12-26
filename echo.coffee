@@ -1,6 +1,6 @@
 module.exports = (env) =>
 
-  FauxMo = require 'fauxmojs'
+  Server = require("./lib/server")
 
   class EchoPlugin extends env.plugins.Plugin
 
@@ -43,7 +43,7 @@ module.exports = (env) =>
       @framework.once "after init", =>
         env.logger.debug("publishing #{devices.length} devices for Amazon echo")
 
-        fauxMo = new FauxMo(
+        server = new Server(
           {
             devices: devices
           }

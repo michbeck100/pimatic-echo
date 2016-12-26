@@ -4,6 +4,7 @@
   "author": "Michael Kotten <michaelkotten@gmail.com> (https://github.com/michbeck100/pimatic-echo)",
   "main": "echo.coffee",
   "files": [
+    "lib",
     "test",
     "echo.coffee",
     "README.md",
@@ -22,7 +23,13 @@
     "test": "grunt test"
   },
   "dependencies": {
-    "fauxmojs": "michbeck100/fauxmojs"
+    "aguid": "^1.0.4",
+    "async": "^2.1.2",
+    "boom": "^4.2.0",
+    "debug": "^2.2.0",
+    "hapi": "^15.2.0",
+    "lodash": "^4.16.4",
+    "uuid": "^2.0.3"
   },
   "devDependencies": {
     "blanket": "^1.2.2",
