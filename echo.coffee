@@ -1,6 +1,7 @@
 module.exports = (env) =>
 
   Server = require("./lib/server")
+  _ = require("lodash")
 
   class EchoPlugin extends env.plugins.Plugin
 
@@ -22,6 +23,8 @@ module.exports = (env) =>
 
       devices = []
       port = 12000
+
+      @framework.deviceManager.deviceConfigExtensions.push(new EchoDeviceConfigExtension())
 
       @framework.on 'deviceAdded', (device) =>
         if @isSupported(device) and not @isExcluded(device)
@@ -68,6 +71,25 @@ module.exports = (env) =>
         when "shutter" then device.moveDown()
         when "buttons" then env.logger.info("A ButtonsDevice doesn't support switching off")
         else device.turnOff()
+
+  class EchoDeviceConfigExtension
+    configSchema:
+      echo:
+        type: "object"
+        properties:
+          exclude:
+            description: "exclude this device from your Amazon echo"
+            type: "boolean"
+            default: false
+
+    extendConfigShema: (schema) ->
+      for name, def of @configSchema
+        schema.properties[name] = _.clone(def)
+
+    applicable: (schema) ->
+      return yes
+
+    apply: (config, device) -> # do nothing here
 
   plugin = new EchoPlugin()
 
