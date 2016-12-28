@@ -46,12 +46,15 @@ Example:
     "class": "DummySwitch",
     "name": "Switch",
     "echo": {
+      "name": "EchoSwitch",
       "exclude": true
     }
   }
 ]
 
 ```
+The name setting will change how the device is called when using your voice. This might be helpful if you have multiple devices in different rooms with the same name or if you just want to have a more meaningful name. To work with Alexa these names must be unique.
+
 To exclude devices from being available to Alexa, just set the "exclude" flag to true. By default all supported devices will be available.
 
 ### Sponsoring

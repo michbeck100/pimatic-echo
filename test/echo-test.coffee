@@ -33,3 +33,22 @@ describe "echo", ->
           echo:
             exclude: true
       }) is true
+
+  describe "getDeviceName", ->
+
+    it "should return device name if no config exists", ->
+      expected = "devicename"
+      assert plugin.getDeviceName({
+        name: expected
+        config:
+          echo: {}
+      }) is expected
+
+    it "should return name from config", ->
+      expected = "devicename"
+      assert plugin.getDeviceName({
+        name: "othername"
+        config:
+          echo:
+            name: expected
+      }) is expected

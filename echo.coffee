@@ -30,7 +30,7 @@ module.exports = (env) =>
         if @isSupported(device) and not @isExcluded(device)
           port = port + 1
           devices.push({
-            name: device.name,
+            name: @getDeviceName(device),
             port: port,
             handler: (action) =>
               env.logger.debug("switching #{device.name} #{action}")
@@ -60,6 +60,12 @@ module.exports = (env) =>
         return device.config.echo.exclude
       return false
 
+    getDeviceName: (device) =>
+      if device.config.echo?.name?
+        return device.config.echo.name
+      else
+        return device.name
+
     turnOn: (device) =>
       switch device.template
         when "shutter" then device.moveUp()
@@ -77,6 +83,10 @@ module.exports = (env) =>
       echo:
         type: "object"
         properties:
+          name:
+            description: "change the name of your device"
+            type: "string"
+            required: no
           exclude:
             description: "exclude this device from your Amazon echo"
             type: "boolean"
