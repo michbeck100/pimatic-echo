@@ -66,6 +66,12 @@ Do you like this plugin? Then consider a donation to support development.
 
 ### Changelog
 
+0.0.4
+* [#3](https://github.com/michbeck100/pimatic-echo/issues/3) Rename devices
+* extend device config schema to get rid of error message
+* Copied files from fauxmo dependency into lib folder and removed dependency
+
+
 0.0.3
 * [#5](https://github.com/michbeck100/pimatic-echo/issues/5) Exclude specific devices from being available to Alexa.
 
