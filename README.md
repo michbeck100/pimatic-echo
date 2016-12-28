@@ -70,6 +70,7 @@ Do you like this plugin? Then consider a donation to support development.
 * [#3](https://github.com/michbeck100/pimatic-echo/issues/3) Rename devices
 * extend device config schema to get rid of error message
 * Copied files from fauxmo dependency into lib folder and removed dependency
+* Reuse UDP port 1900 for UPNP
 
 
 0.0.3
