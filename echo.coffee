@@ -28,19 +28,23 @@ module.exports = (env) =>
 
       @framework.on 'deviceAdded', (device) =>
         if @isSupported(device) and not @isExcluded(device)
-          port = port + 1
-          devices.push({
-            name: @getDeviceName(device),
-            port: port,
-            handler: (action) =>
-              env.logger.debug("switching #{device.name} #{action}")
-              if (action == 'on')
-                @turnOn(device)
-              else if (action == 'off')
-                @turnOff(device)
-              else
-                throw new Error("unsupported action: #{action}")
-          })
+          addDevice = (deviceName) =>
+            port = port + 1
+            devices.push({
+              name: deviceName,
+              port: port,
+              handler: (action) =>
+                env.logger.debug("switching #{deviceName} #{action}")
+                if (action == 'on')
+                  @turnOn(device)
+                else if (action == 'off')
+                  @turnOff(device)
+                else
+                  throw new Error("unsupported action: #{action}")
+            })
+          addDevice(@getDeviceName(device))
+          for additionalName in @getAdditionalNames(device)
+            addDevice(additionalName)
           env.logger.debug("successfully added device " + device.name)
 
       @framework.once "after init", =>
@@ -66,6 +70,12 @@ module.exports = (env) =>
       else
         return device.name
 
+    getAdditionalNames: (device) =>
+      if device.config.echo?.additionalNames?
+        return device.config.echo.additionalNames
+      else
+        return []
+
     turnOn: (device) =>
       switch device.template
         when "shutter" then device.moveUp()
@@ -88,6 +98,12 @@ module.exports = (env) =>
             description: "change the name of your device"
             type: "string"
             required: no
+          additionalNames:
+            description: "additional names for your device"
+            type: "array"
+            required: no
+            items:
+              type: "string"
           exclude:
             description: "exclude this device from your Amazon echo"
             type: "boolean"

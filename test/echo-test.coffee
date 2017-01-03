@@ -52,3 +52,22 @@ describe "echo", ->
           echo:
             name: expected
       }) is expected
+
+  describe "getAdditionalNames", ->
+
+    it "should return empty list no config exists", ->
+      assert plugin.getAdditionalNames({
+        name: "device"
+        config:
+          echo: {}
+      }).length is 0
+
+    it "should return names from config", ->
+      additionalNames = plugin.getAdditionalNames({
+        name: "othername"
+        config:
+          echo:
+            additionalNames: ["1", "2"]
+      })
+      assert additionalNames[0] is "1"
+      assert additionalNames[1] is "2"
