@@ -47,13 +47,14 @@ Example:
     "name": "Switch",
     "echo": {
       "name": "EchoSwitch",
+      "additionalNames": ["AnotherNameForMyEchoSwitch", "YetAnotherName"],
       "exclude": true
     }
   }
 ]
 
 ```
-The name setting will change how the device is called when using your voice. This might be helpful if you have multiple devices in different rooms with the same name or if you just want to have a more meaningful name. To work with Alexa these names must be unique.
+The name setting will change how the device is called when using your voice. This might be helpful if you have multiple devices in different rooms with the same name or if you just want to have a more meaningful name. To work with Alexa these names must be unique. You can also define additional names for your device. For every additional name a new device will be listed in the Alexa app.
 
 To exclude devices from being available to Alexa, just set the "exclude" flag to true. By default all supported devices will be available.
 
@@ -65,6 +66,9 @@ Do you like this plugin? Then consider a donation to support development.
 [![Flattr pimatic-hap](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=michbeck100&url=https://github.com/michbeck100/pimatic-echo&title=pimatic-echo&language=&tags=github&category=software)
 
 ### Changelog
+
+0.0.5
+* [#10](https://github.com/michbeck100/pimatic-echo/issues/10) additional names for supported devices
 
 0.0.4
 * [#3](https://github.com/michbeck100/pimatic-echo/issues/3) Rename devices
