@@ -81,6 +81,7 @@ module.exports = (env) =>
   class EchoDeviceConfigExtension
     configSchema:
       echo:
+        description: "Additional options specific for use with pimatic-echo"
         type: "object"
         properties:
           name:
@@ -94,7 +95,7 @@ module.exports = (env) =>
 
     extendConfigShema: (schema) ->
       for name, def of @configSchema
-        schema.properties[name] = _.clone(def)
+        schema.properties[name] = _.cloneDeep(def)
 
     applicable: (schema) ->
       return yes
