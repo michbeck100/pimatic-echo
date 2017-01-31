@@ -13,17 +13,20 @@ module.exports = (env) =>
     devices: {}
     ipAddress = null
 
-    knownTemplates: [
-      'buttons',
+    HueTemplates: [
       'dimmer',
-      'huezllonoff',
       'huezlldimmable',
       'huezllcolortemp',
       'huezllcolor',
       'huezllextendedcolor',
-      'switch',
-      'shutter',
       'led-light'
+    ]
+
+    WeMoTemplates: [
+      'buttons',
+      'huezllonoff',
+      'switch',
+      'shutter'
     ]
 
     init: (app, @framework, @config) =>
@@ -44,6 +47,7 @@ module.exports = (env) =>
             @devices[deviceId] = {
               device: device,
               name: deviceName,
+              setup: @getDeviceSetup(deviceId, deviceName, port, device),
               port: port,
               handler: (action) =>
                 env.logger.debug("switching #{deviceName} #{action}")
@@ -72,7 +76,7 @@ module.exports = (env) =>
         )
 
     isSupported: (device) =>
-      return device.template in @knownTemplates
+      return device.template in @HueTemplates || device.template in @WeMoTemplates
 
     isExcluded: (device) =>
       if device.config.echo?.exclude?
@@ -117,10 +121,10 @@ module.exports = (env) =>
         udpServer.close()
 
       udpServer.on 'message', (msg, rinfo) =>
-        env.logger.debug "<< server got: #{msg} from #{rinfo.address}:#{rinfo.port}"
 
         if msg.indexOf('M-SEARCH * HTTP/1.1') == 0 && msg.indexOf('ssdp:discover') > 0 &&
           msg.indexOf('urn:schemas-upnp-org:device:basic:1') > 0
+            env.logger.debug "<< server got: #{msg} from #{rinfo.address}:#{rinfo.port}"
             async.eachSeries(@getDiscoveryResponses(), (response, cb) =>
               udpServer.send(response, 0, response.length, rinfo.port, rinfo.address, () =>
                 env.logger.debug ">> sent response ssdp discovery response: #{response}"
@@ -149,10 +153,9 @@ module.exports = (env) =>
         method: 'GET',
         path: '/{deviceId}/setup.xml',
         handler: (request, reply) =>
-          if (!request.params.deviceId)
-            return Boom.badRequest()
-          env.logger.debug ">> sending device setup response for device: #{request.params.deviceId}"
-          reply(@getDeviceSetup(request.params.deviceId))
+          setup = @devices[request.params.deviceId].setup
+          env.logger.debug ">> sending device setup response for device #{request.params.deviceId}: #{setup}"
+          reply(setup)
       })
 
       hapiServer.route({
@@ -183,44 +186,77 @@ module.exports = (env) =>
           reply({ ok: true })
       })
 
-    getDeviceSetup: (deviceId) =>
+    getDeviceSetup: (deviceId, friendlyName, port, device) =>
       @bootId++
-      response = "<?xml version=\"1.0\"?><root>"
-      if !deviceId
-        env.logger.debug 'rendering all device setup info..'
 
-        _.forOwn(@devices, (v, k) =>
-          response += """
+      env.logger.debug "rendering device setup for deviceId: #{deviceId}"
+
+      response = "<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\">"
+
+      if device.template in @HueTemplates
+        response += @getHueSetup(deviceId, friendlyName, port)
+      else if device.template in @WeMoTemplates
+        response += @getWeMoSetup(deviceId, friendlyName)
+
+      response += "</root>"
+      return response
+
+    getWeMoSetup: (deviceId, friendlyName) =>
+      return """
 <device>
     <deviceType>urn:pimatic:device:controllee:1</deviceType>
-    <friendlyName>#{v.name}</friendlyName>
-    <manufacturer>Belkin International Inc.</manufacturer>
-    <modelName>Emulated Socket</modelName>
-    <modelNumber>3.1415</modelNumber>
-    <UDN>uuid:Socket-1_0-#{k}</UDN>
-</device>
-"""
-        )
-      else
-        env.logger.debug "rendering device setup for deviceId: #{deviceId}"
-        device = @devices[deviceId]
-        if !device
-          env.logger.warn(
-            "Device config requested for a device that is no longer valid:#{deviceId}")
-          return Boom.badRequest()
-
-        response += """
-<device>
-    <deviceType>urn:pimatic:device:controllee:1</deviceType>
-    <friendlyName>#{device.name}</friendlyName>
+    <friendlyName>#{friendlyName}</friendlyName>
     <manufacturer>Belkin International Inc.</manufacturer>
     <modelName>Emulated Socket</modelName>
     <modelNumber>3.1415</modelNumber>
     <UDN>uuid:Socket-1_0-#{deviceId}</UDN>
 </device>"""
 
-      response += "</root>"
-      return response
+    getHueSetup: (deviceId, friendlyName, port) =>
+      return """
+<specVersion>
+  <major>1</major>
+  <minor>0</minor>
+</specVersion>
+<URLBase>http://#{@ipAddress}:#{port}/</URLBase>
+<device>
+  <deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>
+  <friendlyName>#{friendlyName}</friendlyName>
+  <manufacturer>Royal Philips Electronics</manufacturer>
+  <manufacturerURL>http://www.pimatic.org</manufacturerURL>
+  <modelDescription>Hue Emulator for pimatic-echo</modelDescription>
+  <modelName>Philips hue bridge 2012</modelName>
+  <modelNumber>929000226503</modelNumber>
+  <modelURL>https://github.com/michbeck100/pimatic-echo</modelURL>
+  <serialNumber>#{deviceId}</serialNumber>
+  <UDN>uuid:#{deviceId}</UDN>
+  <serviceList>
+    <service>
+      <serviceType>(null)</serviceType>
+      <serviceId>(null)</serviceId>
+      <controlURL>(null)</controlURL>
+      <eventSubURL>(null)</eventSubURL>
+      <SCPDURL>(null)</SCPDURL>
+    </service>
+  </serviceList>
+  <presentationURL>index.html</presentationURL>
+  <iconList>
+    <icon>
+      <mimetype>image/png</mimetype>
+      <height>48</height>
+      <width>48</width>
+      <depth>24</depth>
+      <url>hue_logo_0.png</url>
+    </icon>
+    <icon>
+      <mimetype>image/png</mimetype>
+      <height>120</height>
+      <width>120</width>
+      <depth>24</depth>
+      <url>hue_logo_3.png</url>
+    </icon>
+  </iconList>
+</device>"""
 
     getDiscoveryResponses: () =>
       responses = []
@@ -235,7 +271,7 @@ LOCATION: http://#{@ipAddress}:#{v.port}/#{k}/setup.xml
 OPT: "http://schemas.upnp.org/upnp/1/0/"; ns=01
 01-NLS: #{@bootId}
 SERVER: Unspecified, UPnP/1.0, Unspecified
-ST: urn:Belkin:device:**
+ST: urn:schemas-upnp-org:device:basic:1
 USN: uuid:Socket-1_0-#{k}::urn:Belkin:device:**\r\n\r\n
 """
 
