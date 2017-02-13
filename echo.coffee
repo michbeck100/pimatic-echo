@@ -79,7 +79,7 @@ module.exports = (env) =>
     turnOn: (device) =>
       switch device.template
         when "shutter" then device.moveUp()
-        when "buttons" then device.buttonPressed(device.config.buttons[0])
+        when "buttons" then device.buttonPressed(device.config.buttons[0].id)
         else device.turnOn()
 
     turnOff: (device) =>

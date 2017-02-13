@@ -67,6 +67,9 @@ Do you like this plugin? Then consider a donation to support development.
 
 ### Changelog
 
+0.0.6
+* fixed error when switching ButtonsDevice
+
 0.0.5
 * [#10](https://github.com/michbeck100/pimatic-echo/issues/10) additional names for supported devices
 
