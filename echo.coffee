@@ -15,7 +15,9 @@ module.exports = (env) =>
       'huezllextendedcolor',
       'switch',
       'shutter',
-      'led-light'
+      'led-light',
+      'tradfridimmer-dimmer',
+      'tradfridimmer-temp'
     ]
 
     init: (app, @framework, @config) =>
