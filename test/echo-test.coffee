@@ -91,3 +91,77 @@ describe "echo", ->
       })
       assert additionalNames[0] is "1"
       assert additionalNames[1] is "2"
+
+  describe "turnOn", ->
+
+    it "should call moveUp for shutter device", ->
+      wasCalled = false
+      device = {
+        template: "shutter"
+        moveUp: () =>
+          wasCalled = true
+      }
+      plugin.turnOn(device)
+      assert wasCalled
+
+    it "should call buttonPressed for ButtonsDevice", ->
+      wasCalled = false
+      device = {
+        template: "buttons"
+        config: 
+          buttons: [
+            id: 1
+          ]
+        buttonPressed: (id) =>
+          assert id is 1
+          wasCalled = true
+      }
+      plugin.turnOn(device)
+      assert wasCalled
+
+    it "should call turnOn for switches", ->
+      wasCalled = false
+      device = {
+        template: "switch"
+        turnOn: () =>
+          wasCalled = true
+      }
+      plugin.turnOn(device)
+      assert wasCalled
+
+  describe "turnOff", ->
+
+    it "should call moveDown for shutter device", ->
+      wasCalled = false
+      device = {
+        template: "shutter"
+        moveDown: () =>
+          wasCalled = true
+      }
+      plugin.turnOff(device)
+      assert wasCalled
+
+    it "should not call buttonPressed for ButtonsDevice", ->
+      wasCalled = false
+      device = {
+        template: "buttons"
+        config: 
+          buttons: [
+            id: 1
+          ]
+        buttonPressed: (id) =>
+          assert false
+          wasCalled = true
+      }
+      plugin.turnOff(device)
+      assert wasCalled is false
+
+    it "should call turnOff for switches", ->
+      wasCalled = false
+      device = {
+        template: "switch"
+        turnOff: () =>
+          wasCalled = true
+      }
+      plugin.turnOff(device)
+      assert wasCalled
