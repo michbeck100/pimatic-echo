@@ -87,7 +87,7 @@ module.exports = (env) =>
     turnOff: (device) =>
       switch device.template
         when "shutter" then device.moveDown()
-        when "buttons" then device.buttonPressed(device.config.buttons[0].id)
+        when "buttons" then env.logger.info("A ButtonsDevice doesn't support switching off")
         else device.turnOff()
 
   class EchoDeviceConfigExtension

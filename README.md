@@ -70,9 +70,6 @@ Do you like this plugin? Then consider a donation to support development.
 * add support for trafri devices
 * [#20](https://github.com/michbeck100/pimatic-echo/pull/20) randomizing device discovery responses befor sending them out. This way you can discover more than 16 devices within a few scans with the echo.
 
-0.0.7
-* press button when switching off, too
-
 0.0.6
 * fixed error when switching ButtonsDevice
 
