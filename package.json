@@ -25,7 +25,6 @@
     "aguid": "^1.0.4",
     "async": "^2.1.2",
     "boom": "^4.2.0",
-    "hapi": "^15.2.0",
     "lodash": "^4.16.4"
   },
   "devDependencies": {

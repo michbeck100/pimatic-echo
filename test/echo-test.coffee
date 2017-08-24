@@ -7,38 +7,38 @@ describe "echo", ->
 
   plugin = require("../echo")(env)
 
-  describe "isSupported", ->
+  describe "_isSupported", ->
 
     it "should return true if device has a known template", ->
-      assert plugin.isSupported({ template: template }) for template in plugin.knownTemplates
+      assert plugin._isSupported({ template: template }) for template in plugin.knownTemplates
 
     it "should return false if template is unknown", ->
-      assert plugin.isSupported({ template: "foo"}) is false
+      assert plugin._isSupported({ template: "foo"}) is false
 
-  describe "isExcluded", ->
+  describe "_isExcluded", ->
 
     it "should return false if no config value exists", ->
-      assert plugin.isExcluded({config: {}}) is false
+      assert plugin._isExcluded({config: {}}) is false
 
     it "should return false if device is not excluded", ->
-      assert plugin.isExcluded({
+      assert plugin._isExcluded({
         config:
           echo:
             exclude: false
       }) is false
 
     it "should return true if device is excluded", ->
-      assert plugin.isExcluded({
+      assert plugin._isExcluded({
         config:
           echo:
             exclude: true
       }) is true
 
-  describe "getDeviceName", ->
+  describe "_getDeviceName", ->
 
     it "should return device name if no config exists", ->
       expected = "devicename"
-      assert plugin.getDeviceName({
+      assert plugin._getDeviceName({
         name: expected
         config:
           echo: {}
@@ -46,24 +46,24 @@ describe "echo", ->
 
     it "should return name from config", ->
       expected = "devicename"
-      assert plugin.getDeviceName({
+      assert plugin._getDeviceName({
         name: "othername"
         config:
           echo:
             name: expected
       }) is expected
 
-  describe "getAdditionalNames", ->
+  describe "_getAdditionalNames", ->
 
     it "should return empty list no config exists", ->
-      assert plugin.getAdditionalNames({
+      assert plugin._getAdditionalNames({
         name: "device"
         config:
           echo: {}
       }).length is 0
 
     it "should return names from config", ->
-      additionalNames = plugin.getAdditionalNames({
+      additionalNames = plugin._getAdditionalNames({
         name: "othername"
         config:
           echo:
