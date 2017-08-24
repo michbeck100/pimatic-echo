@@ -9,7 +9,7 @@ module.exports = (env) =>
     devices: {}
     ipAddress = null
 
-    Templates: [
+    knownTemplates: [
       'buttons',
       'dimmer',
       'huezlldimmable',
@@ -52,14 +52,13 @@ module.exports = (env) =>
 
                 response = []
                 if state.on?
-                  response.push({ "success": { "/lights/#{uniqueId}/state/on": state.on}})
+                  response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
                   @_changeStateTo(device, state.on)
                 if state.bri?
-                  response.push({ "success": { "/lights/#{uniqueId}/state/bri": state.bri}})
+                  response.push({ "success": { "/lights/#{uniqueId}/state/bri" : state.bri}})
                   @_setBrightness(device, state.bri)
 
                 return JSON.stringify(response)
-
             }
           addDevice(@_getDeviceName(device))
           for additionalName in @_getAdditionalNames(device)
@@ -72,7 +71,7 @@ module.exports = (env) =>
         @_startHueEmulator()
 
     _isSupported: (device) =>
-      return device.template in @Templates
+      return device.template in @knownTemplates
 
     _isExcluded: (device) =>
       if device.config.echo?.exclude?
@@ -290,7 +289,8 @@ module.exports = (env) =>
 
     _getHueBridgeIdFromMac: =>
       cleanMac = @_getSNUUIDFromMac()
-      bridgeId = cleanMac.substring(0,6).toUpperCase() + 'FFFE' + cleanMac.substring(6).toUpperCase()
+      bridgeId =
+        cleanMac.substring(0,6).toUpperCase() + 'FFFE' + cleanMac.substring(6).toUpperCase()
       return bridgeId
 
     _getHueSetup: (deviceId, friendlyName, port) =>
