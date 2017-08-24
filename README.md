@@ -66,6 +66,9 @@ Do you like this plugin? Then consider a donation to support development.
 [![Flattr pimatic-hap](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=michbeck100&url=https://github.com/michbeck100/pimatic-echo&title=pimatic-echo&language=&tags=github&category=software)
 
 ### Changelog
+0.2.0
+* [#8](https://github.com/michbeck100/pimatic-echo/issues/8) support changing dimlevel 
+
 0.1.0
 * add support for trafri devices
 * [#20](https://github.com/michbeck100/pimatic-echo/pull/20) randomizing device discovery responses befor sending them out. This way you can discover more than 16 devices within a few scans with the echo.
