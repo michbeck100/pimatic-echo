@@ -53,12 +53,12 @@ module.exports = (env) =>
                 state = JSON.parse(Object.keys(state)[0])
 
                 response = []
-                if state.on?
-                  response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
-                  @_changeStateTo(device, state.on)
                 if state.bri?
                   response.push({ "success": { "/lights/#{uniqueId}/state/bri" : state.bri}})
                   @_setBrightness(device, state.bri)
+                else if state.on?
+                  response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
+                  @_changeStateTo(device, state.on)
 
                 return JSON.stringify(response)
             }
