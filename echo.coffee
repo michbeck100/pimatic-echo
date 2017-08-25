@@ -1,8 +1,10 @@
 module.exports = (env) =>
 
   _ = require("lodash")
-  udpServer = require('dgram').createSocket({ type: 'udp4', reuseAddr: true })
   async = require('async')
+  bodyParser = require 'body-parser'
+  express = require('express')
+  udpServer = require('dgram').createSocket({ type: 'udp4', reuseAddr: true })
 
   class EchoPlugin extends env.plugins.Plugin
     devices: {}
@@ -30,7 +32,7 @@ module.exports = (env) =>
       @ipAddress = networkInfo?.address
       @macAddress = networkInfo?.mac
       @upnpPort = 1900
-      @serverPort = @framework.config.settings.httpServer.port
+      @serverPort = @config.port
 
       @bootId = 1
       env.logger.debug "Using ip address: #{ipAddress}"
@@ -47,6 +49,7 @@ module.exports = (env) =>
               name: deviceName,
               uniqueId: "00:17:88:5E:D3:" + uniqueId + "-" + uniqueId,
               changeState: (state) =>
+                env.logger.debug("changing state for #{deviceName}: #{JSON.stringify(state)}")
                 state = JSON.parse(Object.keys(state)[0])
 
                 response = []
@@ -114,13 +117,13 @@ module.exports = (env) =>
         else device._state
 
     _getBrightness: (device) =>
+      brightness = 0.0
       if device.hasAttribute("dimlevel")
-        return device._dimlevel
+        brightness = device._dimlevel
       else if device.hasAttribute("brightness")
         # pimatic-led-light
-        return device.brightness
-      else
-        return 0
+        brightness = device.brightness
+      return Math.round(brightness / 100.0 * 255.0)
 
     _setBrightness: (device, dimLevel) =>
       if device.hasAction("changeDimlevelTo")
@@ -157,31 +160,32 @@ module.exports = (env) =>
 
       udpServer.on 'listening', () =>
         address = udpServer.address()
-        env.logger.debug "server listening #{address.address}:#{address.port}"
+        env.logger.debug "udp server listening on port #{address.port}"
         udpServer.addMembership('239.255.255.250')
 
-      env.logger.debug "binding to port #{@upnpPort} for ssdp discovery"
       udpServer.bind(@upnpPort)
 
     _startHueEmulator: () =>
-      env.logger.debug "starting hue emulator on port #{@serverPort}"
+      emulator = express()
+      emulator.use bodyParser.urlencoded(limit: '10mb', extended: true)
+      emulator.use bodyParser.json(limit: '10mb')
 
-      @framework.app.get('/pimatic-echo/description.xml', (req, res) =>
+      emulator.get('/description.xml', (req, res) =>
         res.setHeader("Content-Type", "application/xml; charset=utf-8")
         res.status(200).send(@_getHueTemplate())
       )
 
-      @framework.app.get('/pimatic-echo/favicon.ico', (req, res) =>
+      emulator.get('/favicon.ico', (req, res) =>
         res.status(200).send('')
       )
-      @framework.app.get('/pimatic-echo/hue_logo_0.png', (req, res) =>
+      emulator.get('/hue_logo_0.png', (req, res) =>
         res.status(200).send('')
       )
-      @framework.app.get('/pimatic-echo/hue_logo_3.png', (req, res) =>
+      emulator.get('/hue_logo_3.png', (req, res) =>
         res.status(200).send('')
       )
 
-      @framework.app.get('/api/:userid/lights', (req, res) =>
+      emulator.get('/api/:userid/lights', (req, res) =>
         response = {}
         _.forOwn(@devices, (device, id) =>
           response[id] = @_getDeviceResponse(device)
@@ -190,7 +194,7 @@ module.exports = (env) =>
         res.status(200).send(JSON.stringify(response))
       )
 
-      @framework.app.get('/api/:userid/lights/:id', (req, res) =>
+      emulator.get('/api/:userid/lights/:id', (req, res) =>
         device = @devices[req.params["id"]]
         if device
           res.status(200).send(JSON.stringify(@_getDeviceResponse(device)))
@@ -198,15 +202,14 @@ module.exports = (env) =>
           res.status(404).send("Not found")
       )
 
-      @framework.app.put('/api/:userid/lights/:id/state', (req, res) =>
+      emulator.put('/api/:userid/lights/:id/state', (req, res) =>
         device = @devices[req.params["id"]]
-        env.logger.debug("changing state for #{device.name}")
         response = device.changeState(req.body)
         res.status(200).send(response)
       )
 
-      @framework.app.get('/api/:userid/*', (req, res) =>
-        env.logger.debug("requesting #{req.originalUrl}")
+      emulator.listen(@serverPort, () =>
+        env.logger.info "started hue emulator on port #{@serverPort}"
       )
 
     _getDeviceResponse: (device) =>
@@ -307,7 +310,7 @@ HTTP/1.1 200 OK
 HOST: #{host}:#{@upnpPort}
 CACHE-CONTROL: max-age=100
 EXT:
-LOCATION: http://#{@ipAddress}:#{@serverPort}/pimatic-echo/description.xml
+LOCATION: http://#{@ipAddress}:#{@serverPort}/description.xml
 SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/#{apiVersion}
 hue-bridgeid: #{bridgeId}
 ST: upnp:rootdevice
@@ -318,7 +321,7 @@ HTTP/1.1 200 OK
 HOST: #{host}:#{@upnpPort}
 CACHE-CONTROL: max-age=100
 EXT:
-LOCATION: http://#{@ipAddress}:#{@serverPort}/pimatic-echo/description.xml
+LOCATION: http://#{@ipAddress}:#{@serverPort}/description.xml
 SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/#{apiVersion}
 hue-bridgeid: #{bridgeId}
 ST: uuid:#{uuidPrefix}#{bridgeSNUUID}
@@ -329,7 +332,7 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
 HTTP/1.1 200 OK
 HOST: #{host}:#{@upnpPort}
 CACHE-CONTROL: max-age=100
-LOCATION: http://#{@ipAddress}:#{@serverPort}/pimatic-echo/description.xml
+LOCATION: http://#{@ipAddress}:#{@serverPort}/description.xml
 SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/#{apiVersion}
 hue-bridgeid: #{bridgeId}
 ST: urn:schemas-upnp-org:device:basic:1

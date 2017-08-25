@@ -22,9 +22,9 @@
     "test": "grunt test"
   },
   "dependencies": {
-    "aguid": "^1.0.4",
     "async": "^2.1.2",
-    "boom": "^4.2.0",
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
     "lodash": "^4.16.4"
   },
   "devDependencies": {
