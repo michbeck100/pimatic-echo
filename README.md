@@ -66,6 +66,9 @@ Do you like this plugin? Then consider a donation to support development.
 [![Flattr pimatic-hap](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=michbeck100&url=https://github.com/michbeck100/pimatic-echo&title=pimatic-echo&language=&tags=github&category=software)
 
 ### Changelog
+0.2.3
+* fix getting state for pimatic-led-light 
+
 0.2.2
 * dim lights without turning on before
 

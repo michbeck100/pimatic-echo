@@ -49,15 +49,17 @@ module.exports = (env) =>
               name: deviceName,
               uniqueId: "00:17:88:5E:D3:" + uniqueId + "-" + uniqueId,
               changeState: (state) =>
-                env.logger.debug("changing state for #{deviceName}: #{JSON.stringify(state)}")
+                # env.logger.debug("changing state for #{deviceName}: #{JSON.stringify(state)}")
                 state = JSON.parse(Object.keys(state)[0])
 
                 response = []
                 if state.bri?
                   response.push({ "success": { "/lights/#{uniqueId}/state/bri" : state.bri}})
+                  # env.logger.debug("setting brightness of #{deviceName} to #{state.bri}")
                   @_setBrightness(device, state.bri)
                 else if state.on?
                   response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
+                  # env.logger.debug("setting state of #{deviceName} to #{state.on}")
                   @_changeStateTo(device, state.on)
 
                 return JSON.stringify(response)
@@ -114,6 +116,7 @@ module.exports = (env) =>
       switch device.template
         when "shutter" then false
         when "buttons" then false
+        when "led-light" then device.power == 'on' || device.power == true
         else device._state
 
     _getBrightness: (device) =>
