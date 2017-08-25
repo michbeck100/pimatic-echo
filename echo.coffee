@@ -1,6 +1,5 @@
 module.exports = (env) =>
 
-  Promise = require 'bluebird'
   _ = require("lodash")
   udpServer = require('dgram').createSocket({ type: 'udp4', reuseAddr: true })
   async = require('async')
