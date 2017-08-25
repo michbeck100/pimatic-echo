@@ -43,7 +43,7 @@ module.exports = (env) =>
       @framework.on 'deviceAdded', (device) =>
         if @_isSupported(device) and not @_isExcluded(device)
           addDevice = (deviceName) =>
-            uniqueId = ("0" + (++nextId)).slice(-2)
+            uniqueId = ("0" + (++nextId).toString(16)).slice(-2).toUpperCase()
             @devices[uniqueId] = {
               device: device,
               name: deviceName,
