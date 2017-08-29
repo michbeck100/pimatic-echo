@@ -39,11 +39,11 @@ module.exports = (env) =>
 
       @framework.deviceManager.deviceConfigExtensions.push(new EchoDeviceConfigExtension())
 
-      nextId = 0
+      counter = 0
       @framework.on 'deviceAdded', (device) =>
-        if @_isSupported(device) and not @_isExcluded(device)
+        if counter <= 50 and @_isSupported(device) and not @_isExcluded(device)
           addDevice = (deviceName) =>
-            uniqueId = ("0" + (++nextId).toString(16)).slice(-2).toUpperCase()
+            uniqueId = ("0" + (++counter).toString(16)).slice(-2).toUpperCase()
             @devices[uniqueId] = {
               device: device,
               name: deviceName,
