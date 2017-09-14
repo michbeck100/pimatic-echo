@@ -66,6 +66,10 @@ Do you like this plugin? Then consider a donation to support development.
 [![Flattr pimatic-hap](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=michbeck100&url=https://github.com/michbeck100/pimatic-echo&title=pimatic-echo&language=&tags=github&category=software)
 
 ### Changelog
+0.3.0
+* [#11](https://github.com/michbeck100/pimatic-echo/issues/11) support all buttons on ButtonsDevice
+* [#22](https://github.com/michbeck100/pimatic-echo/issues/22) implement whitelist
+
 0.2.4
 * Add limit of 50 devices since echo seems to have a device limitation (see. https://github.com/bwssytems/ha-bridge/issues/119)
 
