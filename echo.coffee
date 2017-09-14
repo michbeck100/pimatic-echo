@@ -42,7 +42,7 @@ module.exports = (env) =>
       counter = 0
       @framework.on 'deviceAdded', (device) =>
         if counter <= 50 and @_isSupported(device) and not @_isExcluded(device)
-          addDevice = (deviceName) =>
+          addDevice = (deviceName, buttonId) =>
             uniqueId = ("0" + (++counter).toString(16)).slice(-2).toUpperCase()
             @devices[uniqueId] = {
               device: device,
@@ -55,18 +55,21 @@ module.exports = (env) =>
                 response = []
                 if state.bri?
                   response.push({ "success": { "/lights/#{uniqueId}/state/bri" : state.bri}})
-                  # env.logger.debug("setting brightness of #{deviceName} to #{state.bri}")
+                  env.logger.debug("setting brightness of #{deviceName} to #{state.bri}")
                   @_setBrightness(device, state.bri)
                 else if state.on?
                   response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
-                  # env.logger.debug("setting state of #{deviceName} to #{state.on}")
-                  @_changeStateTo(device, state.on)
+                  env.logger.debug("setting state of #{deviceName} to #{state.on}")
+                  @_changeStateTo(device, state.on, buttonId)
 
                 return JSON.stringify(response)
             }
-          addDevice(@_getDeviceName(device))
-          for additionalName in @_getAdditionalNames(device)
-            addDevice(additionalName)
+          if device.template is 'buttons'
+            addDevice(button.text, button.id) for button in device.config.buttons
+          else
+            addDevice(@_getDeviceName(device))
+            for additionalName in @_getAdditionalNames(device)
+              addDevice(additionalName)
           env.logger.debug("successfully added device " + device.name)
 
       @framework.once "after init", =>
@@ -94,17 +97,23 @@ module.exports = (env) =>
       else
         return []
 
-    _changeStateTo: (device, state) =>
+    _changeStateTo: (device, state, buttonId) =>
       if state
-        @_turnOn(device)
+        @_turnOn(device, buttonId)
       else
         @_turnOff(device)
 
-    _turnOn: (device) =>
+    _turnOn: (device, buttonId) =>
       switch device.template
-        when "shutter" then device.moveUp().done()
-        when "buttons" then device.buttonPressed(device.config.buttons[0].id)
-        else device.turnOn().done()
+        when "shutter"
+          device.moveUp().done()
+        when "buttons"
+          if buttonId
+            device.buttonPressed(buttonId).done()
+          else
+            device.buttonPressed(device.config.buttons[0].id).done()
+        else
+          device.turnOn().done()
 
     _turnOff: (device) =>
       switch device.template
