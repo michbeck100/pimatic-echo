@@ -17,22 +17,40 @@ describe "echo", ->
 
   describe "_isExcluded", ->
 
-    it "should return false if no config value exists", ->
-      assert plugin._isExcluded({config: {}}) is false
+    it "should return false if no echo config exists", ->
+      device = {
+        template: "switch"
+        config : {}
+      }
+      assert plugin._isExcluded(device) is false
+      assert device.config.hasOwnProperty('echo')
+      assert device.config.echo.hasOwnProperty('active')
+      assert device.config.echo.active is true
 
-    it "should return false if device is not excluded", ->
-      assert plugin._isExcluded({
+    it "should migrate exclude flag", ->
+      device = {
         config:
           echo:
             exclude: false
-      }) is false
+      }
+      assert plugin._isExcluded(device) is false
+      assert !device.config.echo.hasOwnProperty('exclude')
+      assert device.config.echo.hasOwnProperty('active')
+      assert device.config.echo.active is true
 
-    it "should return true if device is excluded", ->
+    it "should return true if device is not active", ->
       assert plugin._isExcluded({
         config:
           echo:
-            exclude: true
+            active: false
       }) is true
+
+    it "should return false if device is active", ->
+      assert plugin._isExcluded({
+        config:
+          echo:
+            active: true
+      }) is false
 
   describe "_getDeviceName", ->
 

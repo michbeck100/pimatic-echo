@@ -41,7 +41,7 @@ module.exports = (env) =>
 
       counter = 0
       @framework.on 'deviceAdded', (device) =>
-        if counter <= 50 and @_isSupported(device) and not @_isExcluded(device)
+        if counter <= 50 and not @_isExcluded(device) and @_isSupported(device)
           addDevice = (deviceName, buttonId) =>
             uniqueId = ("0" + (++counter).toString(16)).slice(-2).toUpperCase()
             @devices[uniqueId] = {
@@ -81,9 +81,19 @@ module.exports = (env) =>
       return device.template in @knownTemplates
 
     _isExcluded: (device) =>
-      if device.config.echo?.exclude?
-        return device.config.echo.exclude
-      return false
+      # migrate from exclude to active flag
+      if device.config.echo?.exclude? && !device.config.echo.hasOwnProperty('active')
+        device.config.echo.active = !device.config.echo.exclude
+        delete device.config.echo.exclude
+        env.logger.info "exclude flag for device #{device.name} migrated"
+      else if @_isSupported(device)
+        # devices with no echo config get the default config
+        if !device.config.echo?
+          device.config.echo = {}
+        device.config.echo?.active = true
+      if device.config.echo?.active?
+        return device.config.echo.active is false
+      return true
 
     _getDeviceName: (device) =>
       if device.config.echo?.name?
@@ -375,7 +385,11 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
             items:
               type: "string"
           exclude:
-            description: "exclude this device from your Amazon echo"
+            description: "Exclude this device. Deprecated in favor of active flag."
+            type: "boolean"
+            default: false
+          active:
+            description: "make this device available for Alexa"
             type: "boolean"
             default: false
 
