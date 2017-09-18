@@ -66,6 +66,9 @@ Do you like this plugin? Then consider a donation to support development.
 [![Flattr pimatic-hap](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=michbeck100&url=https://github.com/michbeck100/pimatic-echo&title=pimatic-echo&language=&tags=github&category=software)
 
 ### Changelog
+0.3.1
+* fix echo config migration from blacklist to whitelist
+
 0.3.0
 * [#11](https://github.com/michbeck100/pimatic-echo/issues/11) support all buttons on ButtonsDevice
 * [#22](https://github.com/michbeck100/pimatic-echo/issues/22) implement whitelist
