@@ -81,18 +81,17 @@ module.exports = (env) =>
       return device.template in @knownTemplates
 
     _isExcluded: (device) =>
-      # migrate from exclude to active flag
-      if device.config.echo?.exclude? && !device.config.echo.hasOwnProperty('active')
-        device.config.echo.active = !device.config.echo.exclude
-        delete device.config.echo.exclude
-        env.logger.info "exclude flag for device #{device.name} migrated"
-      else if @_isSupported(device)
+      if @_isSupported(device)
         # devices with no echo config get the default config
         if !device.config.hasOwnProperty('echo')
           device.config.echo = {}
-        device.config.echo?.active = false
-      if device.config.echo?.active?
+          device.config.echo.active = false
+        if device.config.echo.hasOwnProperty('exclude')
+          device.config.echo.active = !device.config.echo.exclude
+          delete device.config.echo.exclude
+          env.logger.info "exclude flag for device #{device.name} migrated"
         return device.config.echo.active is false
+
       return true
 
     _getDeviceName: (device) =>

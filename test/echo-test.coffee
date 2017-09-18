@@ -29,6 +29,7 @@ describe "echo", ->
 
     it "should migrate exclude flag", ->
       device = {
+        template: 'switch'
         config:
           echo:
             exclude: false
@@ -47,6 +48,7 @@ describe "echo", ->
 
     it "should return false if device is active", ->
       assert plugin._isExcluded({
+        template: 'switch'
         config:
           echo:
             active: true
