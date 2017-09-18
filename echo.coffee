@@ -88,9 +88,9 @@ module.exports = (env) =>
         env.logger.info "exclude flag for device #{device.name} migrated"
       else if @_isSupported(device)
         # devices with no echo config get the default config
-        if !device.config.echo?
+        if !device.config.hasOwnProperty('echo')
           device.config.echo = {}
-        device.config.echo?.active = true
+        device.config.echo?.active = false
       if device.config.echo?.active?
         return device.config.echo.active is false
       return true
