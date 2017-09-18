@@ -17,15 +17,15 @@ describe "echo", ->
 
   describe "_isExcluded", ->
 
-    it "should return false if no echo config exists", ->
+    it "should return true if no echo config exists", ->
       device = {
         template: "switch"
         config : {}
       }
-      assert plugin._isExcluded(device) is false
+      assert plugin._isExcluded(device) is true
       assert device.config.hasOwnProperty('echo')
       assert device.config.echo.hasOwnProperty('active')
-      assert device.config.echo.active is true
+      assert device.config.echo.active is false
 
     it "should migrate exclude flag", ->
       device = {
