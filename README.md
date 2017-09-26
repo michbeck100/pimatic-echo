@@ -58,6 +58,8 @@ The name setting will change how the device is called when using your voice. Thi
 
 To make devices available to Alexa, just set the "active" flag to true. You must manually activate them.
 
+Please make sure that pimatic-echo is placed at the top of the plugins configuration. This helps avoiding misleading error messages, that the echo configuration is unsupported and also enables the configuration via web ui.
+
 ### Sponsoring
 
 Do you like this plugin? Then consider a donation to support development.
