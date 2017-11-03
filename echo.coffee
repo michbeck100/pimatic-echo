@@ -35,7 +35,7 @@ module.exports = (env) =>
       @serverPort = @config.port
 
       @bootId = 1
-      env.logger.debug "Using ip address: #{ipAddress}"
+      #env.logger.debug "Using ip address : #{ipAddress}"
 
       @framework.deviceManager.deviceConfigExtensions.push(new EchoDeviceConfigExtension())
 
@@ -49,15 +49,14 @@ module.exports = (env) =>
               name: deviceName,
               uniqueId: "00:17:88:5E:D3:" + uniqueId + "-" + uniqueId,
               changeState: (state) =>
-                # env.logger.debug("changing state for #{deviceName}: #{JSON.stringify(state)}")
-                state = JSON.parse(Object.keys(state)[0])
-
+                env.logger.debug("changing state for #{deviceName}: #{JSON.stringify(state)}")
+                setMode = Object.keys(state)[0]
                 response = []
-                if state.bri?
+                if setMode == "bri"
                   response.push({ "success": { "/lights/#{uniqueId}/state/bri" : state.bri}})
                   env.logger.debug("setting brightness of #{deviceName} to #{state.bri}")
                   @_setBrightness(device, state.bri)
-                else if state.on?
+                if setMode == "on"
                   response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
                   env.logger.debug("setting state of #{deviceName} to #{state.on}")
                   @_changeStateTo(device, state.on, buttonId)
@@ -105,6 +104,12 @@ module.exports = (env) =>
         return device.config.echo.additionalNames
       else
         return []
+
+    _getDeviceType: (device) =>
+      if device.device.config.echo?.hueType?
+        return device.device.config.echo.hueType
+      else
+        return "Dimmer"
 
     _changeStateTo: (device, state, buttonId) =>
       if state
@@ -166,7 +171,7 @@ module.exports = (env) =>
       udpServer.on 'message', (msg, rinfo) =>
 
         if msg.indexOf('M-SEARCH * HTTP/1.1') == 0 && msg.indexOf('ssdp:discover') > 0 &&
-          msg.indexOf('urn:schemas-upnp-org:device:basic:1') > 0
+          msg.indexOf('upnp:rootdevice') > 0
             env.logger.debug "<< server got: #{msg} from #{rinfo.address}:#{rinfo.port}"
             async.eachSeries(@_getDiscoveryResponses(), (response, cb) =>
               udpServer.send(response, 0, response.length, rinfo.port, rinfo.address, () =>
@@ -193,6 +198,7 @@ module.exports = (env) =>
 
       emulator.get('/description.xml', (req, res) =>
         res.setHeader("Content-Type", "application/xml; charset=utf-8")
+        env.logger.debug "Hue bridge description.xml called"
         res.status(200).send(@_getHueTemplate())
       )
 
@@ -205,8 +211,16 @@ module.exports = (env) =>
       emulator.get('/hue_logo_3.png', (req, res) =>
         res.status(200).send('')
       )
+      
+      emulator.post('/api', (req, res) =>
+        env.logger.debug "API config called for retrieving synch userId"
+        response = []
+        response.push({ "success": { "username": "83b7780291a6ceffbe0bd049104df"}})
+        res.status(200).send(JSON.stringify(response))
+      )
 
       emulator.get('/api/:userid/lights', (req, res) =>
+        env.logger.debug "discover all lights called"
         response = {}
         _.forOwn(@devices, (device, id) =>
           response[id] = @_getDeviceResponse(device)
@@ -225,6 +239,7 @@ module.exports = (env) =>
 
       emulator.put('/api/:userid/lights/:id/state', (req, res) =>
         device = @devices[req.params["id"]]
+        env.logger.debug "set device state for device: #{JSON.stringify(device)} called"
         response = device.changeState(req.body)
         res.status(200).send(response)
       )
@@ -234,25 +249,42 @@ module.exports = (env) =>
       )
 
     _getDeviceResponse: (device) =>
-      response = {
-        state: {
-          on: @_getState(device.device),
-          bri: @_getBrightness(device.device),
-          hue: 0,
-          sat: 0,
-          effect: "none",
-          ct: 0,
-          alert: "none",
-          reachable: true
-        },
-        type: "Dimmable light",
-        name: device.name,
-        modelid: "LWB004",
-        manufacturername: "Philips",
-        uniqueid: device.uniqueId,
-        swversion: "66012040"
-      }
-      return response
+      deviceType = @_getDeviceType(device)
+      env.logger.debug "DLU DEBUG: get device config for deviceType: #{deviceType}"
+      switch deviceType
+        when "Dimmer"
+          return {
+            state: {
+              on: @_getState(device.device),
+              bri: @_getBrightness(device.device),
+              hue: 0,
+              sat: 0,
+              effect: "none",
+              ct: 0,
+              alert: "none",
+              reachable: true
+            },
+            type: "Dimmable light",
+            name: device.name,
+            modelid: "LWB004",
+            manufacturername: "Philips",
+            uniqueid: device.uniqueId,
+            swversion: "66012040"
+          }
+        when "Switch"
+          return {
+            state: {
+              on: @_getState(device.device),
+              alert: "none",
+              reachable: true
+            },
+            type: "On/Off plug-in unit",
+            name: device.name,
+            modelid: "Plug - LIGHTIFY",
+            manufacturername: "Philips",
+            uniqueid: device.uniqueId,
+            swversion: "66012040"
+          }
 
     _getHueTemplate: =>
       bridgeIdMac = @_getSNUUIDFromMac()
@@ -275,15 +307,6 @@ module.exports = (env) =>
     <modelURL>http://www.meethue.com</modelURL>
     <serialNumber>#{bridgeIdMac}</serialNumber>
     <UDN>uuid:2f402f80-da50-11e1-9b23-#{bridgeIdMac}</UDN>
-    <serviceList>
-      <service>
-        <serviceType>(null)</serviceType>
-        <serviceId>(null)</serviceId>
-        <controlURL>(null)</controlURL>
-        <eventSubURL>(null)</eventSubURL>
-        <SCPDURL>(null)</SCPDURL>
-      </service>
-    </serviceList>
     <presentationURL>index.html</presentationURL>
     <iconList>
       <icon>
@@ -387,6 +410,12 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
             description: "Exclude this device. Deprecated in favor of active flag."
             type: "boolean"
             default: false
+          hueType:
+            description: "the Hue Type of the device"
+            type: "string"
+            required: no
+            enum: ['Dimmer', 'Switch']
+            default: "Dimmer"
           active:
             description: "make this device available for Alexa"
             type: "boolean"
