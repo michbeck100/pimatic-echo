@@ -29,13 +29,16 @@ module.exports = (env) =>
       env.logger.info("Starting pimatic-echo...")
 
       networkInfo = @_getNetworkInfo()
-      @ipAddress = networkInfo?.address
-      @macAddress = networkInfo?.mac
+      if networkInfo == null && (!@config.address || !@config.mac)
+        throw new Error("Unable to obtain network information. Please provide ip and mac address in plugin config!")
+
+      @ipAddress = if @config.address then @config.address else networkInfo.address
+      @macAddress = if @config.mac then @config.mac else networkInfo.mac
       @upnpPort = 1900
       @serverPort = @config.port
 
       @bootId = 1
-      env.logger.debug "Using ip address: #{ipAddress}"
+      env.logger.debug "Using ip address: #{@ipAddress}"
 
       @framework.deviceManager.deviceConfigExtensions.push(new EchoDeviceConfigExtension())
 
@@ -156,6 +159,7 @@ module.exports = (env) =>
         for addrInfo in ifaceDetails
           if addrInfo.family == 'IPv4' && !addrInfo.internal
             return addrInfo
+      env.logger.warn("No network interface found.")
       return null
 
     _startDiscoveryServer: () =>
