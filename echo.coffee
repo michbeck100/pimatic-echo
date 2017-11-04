@@ -250,7 +250,7 @@ module.exports = (env) =>
 
     _getDeviceResponse: (device) =>
       deviceType = @_getDeviceType(device)
-      env.logger.debug "DLU DEBUG: get device config for deviceType: #{deviceType}"
+      env.logger.debug "providing device config for deviceType: #{deviceType}"
       switch deviceType
         when "Dimmer"
           return {
