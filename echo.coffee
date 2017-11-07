@@ -10,19 +10,22 @@ module.exports = (env) =>
     devices: {}
     ipAddress = null
 
-    knownTemplates: [
-      'buttons',
+    dimmerTemplates: [
       'dimmer',
       'huezlldimmable',
       'huezllcolortemp',
       'huezllcolor',
       'huezllextendedcolor',
-      'huezllonoff',
       'led-light',
-      'shutter'
-      'switch',
       'tradfridimmer-dimmer',
       'tradfridimmer-temp'
+    ]
+
+    switchTemplates: [
+      'buttons',
+      'huezllonoff',
+      'shutter'
+      'switch'
     ]
 
     init: (app, @framework, @config) =>
@@ -54,16 +57,16 @@ module.exports = (env) =>
               uniqueId: "00:17:88:5E:D3:" + uniqueId + "-" + uniqueId,
               changeState: (state) =>
                 env.logger.debug("changing state for #{deviceName}: #{JSON.stringify(state)}")
-                setMode = Object.keys(state)[0]
+                state = JSON.parse(Object.keys(state)[0])
                 response = []
-                if setMode == "bri"
-                  response.push({ "success": { "/lights/#{uniqueId}/state/bri" : state.bri}})
+                if state.bri?
                   env.logger.debug("setting brightness of #{deviceName} to #{state.bri}")
                   @_setBrightness(device, state.bri)
-                if setMode == "on"
-                  response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
+                else if state.on?
                   env.logger.debug("setting state of #{deviceName} to #{state.on}")
                   @_changeStateTo(device, state.on, buttonId)
+                response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
+                response.push({ "success": { "/lights/#{uniqueId}/state/bri" : state.bri }})
 
                 return JSON.stringify(response)
             }
@@ -81,7 +84,13 @@ module.exports = (env) =>
         @_startHueEmulator()
 
     _isSupported: (device) =>
-      return device.template in @knownTemplates
+      return @_isDimmer(device) || @_isSwitch(device)
+
+    _isDimmer: (device) =>
+      return device.template in @dimmerTemplates
+
+    _isSwitch: (device) =>
+      return device.template in @switchTemplates
 
     _isExcluded: (device) =>
       if @_isSupported(device)
@@ -108,12 +117,6 @@ module.exports = (env) =>
         return device.config.echo.additionalNames
       else
         return []
-
-    _getDeviceType: (device) =>
-      if device.device.config.echo?.hueType?
-        return device.device.config.echo.hueType
-      else
-        return "Dimmer"
 
     _changeStateTo: (device, state, buttonId) =>
       if state
@@ -153,11 +156,16 @@ module.exports = (env) =>
       else if device.hasAttribute("brightness")
         # pimatic-led-light
         brightness = device.brightness
+      else if @_isSwitch(device)
+        brightness = if @_getState(device) then 100.0 else 0.0
       return Math.round(brightness / 100.0 * 255.0)
 
-    _setBrightness: (device, dimLevel) =>
+    _setBrightness: (device, dimLevel, buttonId) =>
       if device.hasAction("changeDimlevelTo")
         device.changeDimlevelTo(Math.round(dimLevel / 255.0 * 100.0)).done()
+      else if @_isSwitch(device)
+        @_changeStateTo(device, dimLevel > 0, buttonId)
+      @devices
 
     _getNetworkInfo: =>
       networkInterfaces = require('os').networkInterfaces()
@@ -175,8 +183,9 @@ module.exports = (env) =>
 
       udpServer.on 'message', (msg, rinfo) =>
 
-        if msg.indexOf('M-SEARCH * HTTP/1.1') == 0 && msg.indexOf('ssdp:discover') > 0 &&
-          msg.indexOf('upnp:rootdevice') > 0
+        if msg.indexOf('M-SEARCH * HTTP/1.1') == 0 && msg.indexOf('ssdp:discover') > 0
+          if msg.indexOf('ST: urn:schemas-upnp-org:device:basic:1') > 0 ||
+              msg.indexOf('ST: upnp:rootdevice') > 0 || msg.indexOf('ST: ssdp:all') > 0
             env.logger.debug "<< server got: #{msg} from #{rinfo.address}:#{rinfo.port}"
             async.eachSeries(@_getDiscoveryResponses(), (response, cb) =>
               udpServer.send(response, 0, response.length, rinfo.port, rinfo.address, () =>
@@ -203,7 +212,6 @@ module.exports = (env) =>
 
       emulator.get('/description.xml', (req, res) =>
         res.setHeader("Content-Type", "application/xml; charset=utf-8")
-        env.logger.debug "Hue bridge description.xml called"
         res.status(200).send(@_getHueTemplate())
       )
 
@@ -218,14 +226,12 @@ module.exports = (env) =>
       )
 
       emulator.post('/api', (req, res) =>
-        env.logger.debug "API config called for retrieving synch userId"
         response = []
         response.push({ "success": { "username": "83b7780291a6ceffbe0bd049104df"}})
         res.status(200).send(JSON.stringify(response))
       )
 
       emulator.get('/api/:userid/lights', (req, res) =>
-        env.logger.debug "discover all lights called"
         response = {}
         _.forOwn(@devices, (device, id) =>
           response[id] = @_getDeviceResponse(device)
@@ -244,7 +250,6 @@ module.exports = (env) =>
 
       emulator.put('/api/:userid/lights/:id/state', (req, res) =>
         device = @devices[req.params["id"]]
-        env.logger.debug "set device state for device: #{JSON.stringify(device)} called"
         response = device.changeState(req.body)
         res.status(200).send(response)
       )
@@ -254,42 +259,24 @@ module.exports = (env) =>
       )
 
     _getDeviceResponse: (device) =>
-      deviceType = @_getDeviceType(device)
-      env.logger.debug "providing device config for deviceType: #{deviceType}"
-      switch deviceType
-        when "Dimmer"
-          return {
-            state: {
-              on: @_getState(device.device),
-              bri: @_getBrightness(device.device),
-              hue: 0,
-              sat: 0,
-              effect: "none",
-              ct: 0,
-              alert: "none",
-              reachable: true
-            },
-            type: "Dimmable light",
-            name: device.name,
-            modelid: "LWB004",
-            manufacturername: "Philips",
-            uniqueid: device.uniqueId,
-            swversion: "66012040"
-          }
-        when "Switch"
-          return {
-            state: {
-              on: @_getState(device.device),
-              alert: "none",
-              reachable: true
-            },
-            type: "On/Off plug-in unit",
-            name: device.name,
-            modelid: "Plug - LIGHTIFY",
-            manufacturername: "Philips",
-            uniqueid: device.uniqueId,
-            swversion: "66012040"
-          }
+      return {
+        state: {
+          on: @_getState(device.device),
+          bri: @_getBrightness(device.device),
+          hue: 0,
+          sat: 0,
+          effect: "none",
+          ct: 0,
+          alert: "none",
+          reachable: true
+        },
+        type: "Dimmable light",
+        name: device.name,
+        modelid: "LWB004",
+        manufacturername: "Philips",
+        uniqueid: device.uniqueId,
+        swversion: "66012040"
+      }
 
     _getHueTemplate: =>
       bridgeIdMac = @_getSNUUIDFromMac()
@@ -431,6 +418,7 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
         schema.properties[name] = _.cloneDeep(def)
 
     applicable: (schema) ->
+      env.logger.debug "schema: #{schema}"
       return yes
 
     apply: (config, device) -> # do nothing here
