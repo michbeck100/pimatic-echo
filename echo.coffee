@@ -30,7 +30,8 @@ module.exports = (env) =>
 
       networkInfo = @_getNetworkInfo()
       if networkInfo == null && (!@config.address || !@config.mac)
-        throw new Error("Unable to obtain network information. Please provide ip and mac address in plugin config!")
+        throw new Error("Unable to obtain network information."
+          +" Please provide ip and mac address in plugin config!")
 
       @ipAddress = if @config.address then @config.address else networkInfo.address
       @macAddress = if @config.mac then @config.mac else networkInfo.mac

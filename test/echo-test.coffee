@@ -1,5 +1,6 @@
 assert = require "assert"
 grunt = require "grunt"
+Promise = require 'bluebird'
 
 env = require("../node_modules/pimatic/startup").env
 
@@ -100,8 +101,9 @@ describe "echo", ->
         template: "shutter"
         moveUp: () =>
           wasCalled = true
+          return Promise.resolve()
       }
-      plugin.turnOn(device)
+      plugin._turnOn(device)
       assert wasCalled
 
     it "should call buttonPressed for ButtonsDevice", ->
@@ -115,8 +117,9 @@ describe "echo", ->
         buttonPressed: (id) =>
           assert id is 1
           wasCalled = true
+          return Promise.resolve()
       }
-      plugin.turnOn(device)
+      plugin._turnOn(device)
       assert wasCalled
 
     it "should call turnOn for switches", ->
@@ -125,8 +128,9 @@ describe "echo", ->
         template: "switch"
         turnOn: () =>
           wasCalled = true
+          return Promise.resolve()
       }
-      plugin.turnOn(device)
+      plugin._turnOn(device)
       assert wasCalled
 
   describe "turnOff", ->
@@ -137,8 +141,9 @@ describe "echo", ->
         template: "shutter"
         moveDown: () =>
           wasCalled = true
+          return Promise.resolve()
       }
-      plugin.turnOff(device)
+      plugin._turnOff(device)
       assert wasCalled
 
     it "should not call buttonPressed for ButtonsDevice", ->
@@ -152,8 +157,9 @@ describe "echo", ->
         buttonPressed: (id) =>
           assert false
           wasCalled = true
+          return Promise.resolve()
       }
-      plugin.turnOff(device)
+      plugin._turnOff(device)
       assert wasCalled is false
 
     it "should call turnOff for switches", ->
@@ -162,6 +168,7 @@ describe "echo", ->
         template: "switch"
         turnOff: () =>
           wasCalled = true
+          return Promise.resolve()
       }
-      plugin.turnOff(device)
+      plugin._turnOff(device)
       assert wasCalled
