@@ -28,6 +28,11 @@ module.exports = (env) =>
       'switch'
     ]
 
+    heatingTemplates: [
+      'maxcul-heating-thermostat',
+      'thermostat'
+    ]
+  
     init: (app, @framework, @config) =>
       env.logger.info("Starting pimatic-echo...")
 
@@ -84,13 +89,16 @@ module.exports = (env) =>
         @_startHueEmulator()
 
     _isSupported: (device) =>
-      return @_isDimmer(device) || @_isSwitch(device)
+      return @_isDimmer(device) || @_isSwitch(device) || @_isHeating
 
     _isDimmer: (device) =>
       return device.template in @dimmerTemplates
 
     _isSwitch: (device) =>
       return device.template in @switchTemplates
+    
+    _isHeating: (device) =>
+      return device.template in @heatingTemplates
 
     _isExcluded: (device) =>
       if @_isSupported(device)
@@ -133,6 +141,8 @@ module.exports = (env) =>
             device.buttonPressed(buttonId).done()
           else
             device.buttonPressed(device.config.buttons[0].id).done()
+        when "maxcul-heating-thermostat" then device.changeTemperatureTo(device.config.comfyTemp).done()
+        when "thermostat" then device.changeTemperatureTo(device.config.comfyTemp).done()
         else
           device.turnOn().done()
 
@@ -140,12 +150,16 @@ module.exports = (env) =>
       switch device.template
         when "shutter" then device.moveDown().done()
         when "buttons" then env.logger.info("A ButtonsDevice doesn't support switching off")
+        when "maxcul-heating-thermostat" then device.changeTemperatureTo(device.config.ecoTemp).done()
+        when "thermostat" then device.changeTemperatureTo(device.config.ecoTemp).done()
         else device.turnOff().done()
 
     _getState: (device) =>
       switch device.template
         when "shutter" then false
         when "buttons" then false
+        when "maxcul-heating-thermostat" then device._temperatureSetpoint > device.config.ecoTemp
+        when "thermostat" then device._temperatureSetpoint > device.config.ecoTemp
         when "led-light" then device.power == 'on' || device.power == true
         else device._state
 
@@ -158,13 +172,17 @@ module.exports = (env) =>
         brightness = device.brightness
       else if @_isSwitch(device)
         brightness = if @_getState(device) then 100.0 else 0.0
-      return Math.round(brightness / 100.0 * 255.0)
+      else if @_isHeating(device)
+        brightness = device._temperatureSetpoint
+      return Math.round(brightness / 100 * 255.0)
 
     _setBrightness: (device, dimLevel, buttonId) =>
       if device.hasAction("changeDimlevelTo")
         device.changeDimlevelTo(Math.round(dimLevel / 255.0 * 100.0)).done()
       else if @_isSwitch(device)
-        @_changeStateTo(device, dimLevel > 0, buttonId)
+        @_changeStateTo(device, dimLevel > 0, buttonId)    
+      else if @_isHeating(device)
+        device.changeTemperatureTo(Math.round(dimLevel / 255.0 * 100 )).done()          
       @devices
 
     _getNetworkInfo: =>
