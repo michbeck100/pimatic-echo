@@ -30,7 +30,8 @@ module.exports = (env) =>
 
     heatingTemplates: [
       'maxcul-heating-thermostat',
-      'thermostat'
+      'thermostat',
+      'mythermostat'
     ]
   
     init: (app, @framework, @config) =>
@@ -141,8 +142,7 @@ module.exports = (env) =>
             device.buttonPressed(buttonId).done()
           else
             device.buttonPressed(device.config.buttons[0].id).done()
-        when "maxcul-heating-thermostat" then device.changeTemperatureTo(device.config.comfyTemp).done()
-        when "thermostat" then device.changeTemperatureTo(device.config.comfyTemp).done()
+        when "maxcul-heating-thermostat", "mythermostat", "thermostat" then device.changeTemperatureTo(device.config.comfyTemp).done()
         else
           device.turnOn().done()
 
@@ -150,16 +150,14 @@ module.exports = (env) =>
       switch device.template
         when "shutter" then device.moveDown().done()
         when "buttons" then env.logger.info("A ButtonsDevice doesn't support switching off")
-        when "maxcul-heating-thermostat" then device.changeTemperatureTo(device.config.ecoTemp).done()
-        when "thermostat" then device.changeTemperatureTo(device.config.ecoTemp).done()
+        when "maxcul-heating-thermostat", "mythermostat", "thermostat" then device.changeTemperatureTo(device.config.ecoTemp).done()
         else device.turnOff().done()
 
     _getState: (device) =>
       switch device.template
         when "shutter" then false
         when "buttons" then false
-        when "maxcul-heating-thermostat" then device._temperatureSetpoint > device.config.ecoTemp
-        when "thermostat" then device._temperatureSetpoint > device.config.ecoTemp
+        when "maxcul-heating-thermostat", "mythermostat", "thermostat" then device._temperatureSetpoint > device.config.ecoTemp
         when "led-light" then device.power == 'on' || device.power == true
         else device._state
 
