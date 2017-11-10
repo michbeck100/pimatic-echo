@@ -61,7 +61,8 @@ module.exports = (env) =>
         if @_isDimmer(device)
           if Object.keys(dimmers).length <= 50
             addDevice = (deviceName, buttonId) =>
-              uniqueId = ("0" + (Object.keys(dimmers).length + 1).toString(16)).slice(-2).toUpperCase()
+              uniqueId = ("0" + (Object.keys(dimmers).length + 1).toString(16))
+                .slice(-2).toUpperCase()
               dimmers[uniqueId] = {
                 device: device,
                 name: deviceName,
