@@ -3,7 +3,7 @@ module.exports = (env) =>
   _ = require('lodash')
   async = require('async')
   aguid = require('aguid')
-  bodyParser = require 'body-parser'
+  bodyParser = require('body-parser')
   Boom = require('boom')
   express = require('express')
   hapi = require('hapi')
@@ -233,14 +233,9 @@ module.exports = (env) =>
       udpServer.bind(@upnpPort)
 
     _startEmulator: (dimmers, switches) =>
-      logger = (req, res, next) =>
-        env.logger.debug "request to #{req.originalUrl}"
-        next()
 
       emulator = express()
-      emulator.use bodyParser.urlencoded(limit: '10mb', extended: true)
-      emulator.use bodyParser.json(limit: '10mb')
-      emulator.use logger
+      emulator.use bodyParser.json(limit: '1mb')
 
       emulator.get('/description.xml', (req, res) =>
         res.setHeader("Content-Type", "application/xml; charset=utf-8")
@@ -295,24 +290,50 @@ module.exports = (env) =>
           res.status(404).send("Not found")
       )
 
-      emulator.post('/upnp/control/basicevent1', (req, res) =>
+      emulator.post('/upnp/control/basicevent1', bodyParser.text({type: 'text/*'}), (req, res) =>
 
         portNumber = Number(req.headers.host.split(':')[1])
-        device = _.find(@devices, (d) => d.port == portNumber)
+        device = _.find(switches, (d) => d.port == portNumber)
 
-        if !device
+        soapAction = req.headers['soapaction']
+
+        #env.logger.debug req.body
+        #env.logger.debug soapAction
+
+        if soapAction.indexOf('GetBinaryState') > 0
+          res.setHeader("Content-Type", "application/xml; charset=utf-8")
+          res.status(200).send("""
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
+    s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+ <s:Body>
+   <u:GetBinaryStateResponse xmlns:u="urn:Belkin:service:basicevent:1">
+     <BinaryState>#{if @_getState(device.device) then "1" else "0"}</BinaryState>
+   </u:GetBinaryStateResponse>
+ </s:Body>
+</s:Envelope>
+""")
+        else if soapAction.indexOf('SetBinaryState') > 0
           if req.body.indexOf('<BinaryState>1</BinaryState>') > 0
             state = on
           else if req.body.indexOf('<BinaryState>0</BinaryState>') > 0
             state = off
           else
             throw new Error("no state found in payload")
-
           env.logger.debug "Action received for device: #{device.name} state: #{state}"
           device.handler(state)
-          res.sendStatus(200)
+          res.setHeader("Content-Type", "application/xml; charset=utf-8")
+          res.status(200).send("""
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
+    s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+ <s:Body>
+   <u:SetBinaryStateResponse xmlns:u="urn:Belkin:service:basicevent:1">
+     <BinaryState>#{if state then "1" else "0"}</BinaryState>
+   </u:SetBinaryStateResponse>
+ </s:Body>
+</s:Envelope>
+""")
         else
-          res.status(400).send("Bad request")
+          throw new Error("unsupported soap action: #{soapAction}")
       )
 
       emulator.listen(@serverPort, () =>
@@ -534,6 +555,17 @@ USN: uuid:Socket-1_0-#{k}::urn:Belkin:device:**\r\n\r\n
         <modelName>Emulated Socket</modelName>
         <modelNumber>3.1415</modelNumber>
         <UDN>uuid:Socket-1_0-#{device.id}</UDN>
+        <serialNumber>#{device.id}</serialNumber>
+        <binaryState>#{if @_getState(device.device) then "1" else "0"}</binaryState>
+        <serviceList>
+          <service>
+            <serviceType>urn:Belkin:service:basicevent:1</serviceType>
+            <serviceId>urn:Belkin:serviceId:basicevent1</serviceId>
+            <controlURL>/upnp/control/basicevent1</controlURL>
+            <eventSubURL>/upnp/event/basicevent1</eventSubURL>
+            <SCPDURL>/eventservice.xml</SCPDURL>
+          </service>
+        </serviceList>
     </device>"""
 
       response += "</root>"
