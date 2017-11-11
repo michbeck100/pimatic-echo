@@ -132,7 +132,8 @@ module.exports = (env) =>
       if @config.debug
         logger = (req, res, next) =>
           env.logger.debug "Request to #{req.originalUrl}"
-          env.logger.debug "Payload: #{JSON.stringify(req.body)}" unless Object.keys(req.body).length == 0
+          if Object.keys(req.body).length > 0
+            env.logger.debug "Payload: #{JSON.stringify(req.body)}"
           next()
         emulator.use(logger)
 
