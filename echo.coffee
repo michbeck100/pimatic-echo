@@ -257,7 +257,15 @@ module.exports = (env) =>
     _startEmulator: (dimmers, switches) =>
 
       emulator = express()
+      emulator.use bodyParser.urlencoded(limit: '1mb', extended: true)
       emulator.use bodyParser.json(limit: '1mb')
+
+      ###
+      logger = (req, res, next) =>
+        env.logger.debug "request to #{req.originalUrl}. Payload: #{JSON.stringify(req.body)}"
+        next()
+      emulator.use(logger)
+      ###
 
       emulator.get('/description.xml', (req, res) =>
         res.setHeader("Content-Type", "application/xml; charset=utf-8")
@@ -506,48 +514,6 @@ USN: uuid:Socket-1_0-#{k}::urn:Belkin:device:**\r\n\r\n
       )
 
       return responses
-
-    _startWemoEmulator: (switches) =>
-      _.forOwn(switches, (device, id) =>
-        hapiServer.connection({ port: device.port, labels: [id] })
-      )
-
-      hapiServer.route({
-        method: 'GET',
-        path: '/{deviceId}/setup.xml',
-        handler: (request, reply) =>
-          if (!request.params.deviceId)
-            return Boom.badRequest()
-          env.logger.debug ">> sending device setup response for device: #{request.params.deviceId}"
-          reply(@_getDeviceSetup(request.params.deviceId))
-      })
-
-      hapiServer.route({
-        method: 'POST',
-        path: '/upnp/control/basicevent1',
-        handler: (request, reply) =>
-          portNumber = Number(request.raw.req.headers.host.split(':')[1])
-          device = _.find(@devices, (d) => d.port == portNumber)
-
-          if !device
-            return Boom.notFound()
-
-          if !request.payload
-            return Boom.badRequest()
-          action = null
-          if request.payload.indexOf('<BinaryState>1</BinaryState>') > 0
-            action = 'on'
-          else if request.payload.indexOf('<BinaryState>0</BinaryState>') > 0
-            action = 'off'
-
-          env.logger.debug "Action received for device: #{device.name} action: #{action}"
-          if device.handler
-            device.handler(action)
-          else
-            env.logger.warn "device has no handler: #{device}"
-
-          reply({ ok: true })
-      })
 
     _getDeviceSetup: (device) =>
       @bootId++
