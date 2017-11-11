@@ -64,7 +64,7 @@ module.exports = (env) =>
         if @_isExcluded(device)
           return
 
-        if @_isDimmer(device)
+        if @_isDimmer(device) || @_isHeating(device)
           if Object.keys(dimmers).length <= 50
             addDevice = (deviceName, buttonId) =>
               uniqueId = ("0" + (Object.keys(dimmers).length + 1).toString(16))
@@ -118,7 +118,7 @@ module.exports = (env) =>
         @_startEmulator(dimmers, switches)
 
     _isSupported: (device) =>
-      return @_isDimmer(device) || @_isSwitch(device) || @_isHeating
+      return @_isDimmer(device) || @_isSwitch(device) || @_isHeating(device)
 
     _isDimmer: (device) =>
       return device.template in @dimmerTemplates
@@ -162,32 +162,38 @@ module.exports = (env) =>
         @_turnOff(device)
 
     _turnOn: (device, buttonId) =>
-      switch device.template
-        when "shutter"
-          device.moveUp().done()
-        when "buttons"
-          if buttonId
-            device.buttonPressed(buttonId).done()
+      if @_isHeating(device)
+        device.changeTemperatureTo(device.config.comfyTemp).done()
+      else
+        switch device.template
+          when "shutter"
+            device.moveUp().done()
+          when "buttons"
+            if buttonId
+              device.buttonPressed(buttonId).done()
+            else
+              device.buttonPressed(device.config.buttons[0].id).done()
           else
-            device.buttonPressed(device.config.buttons[0].id).done()
-        when "maxcul-heating-thermostat", "mythermostat", "thermostat" then device.changeTemperatureTo(device.config.comfyTemp).done()
-        else
-          device.turnOn().done()
+            device.turnOn().done()
 
     _turnOff: (device) =>
-      switch device.template
-        when "shutter" then device.moveDown().done()
-        when "buttons" then env.logger.info("A ButtonsDevice doesn't support switching off")
-        when "maxcul-heating-thermostat", "mythermostat", "thermostat" then device.changeTemperatureTo(device.config.ecoTemp).done()
-        else device.turnOff().done()
+      if @_isHeating(device)
+        device.changeTemperatureTo(device.config.ecoTemp).done()
+      else
+        switch device.template
+          when "shutter" then device.moveDown().done()
+          when "buttons" then env.logger.info("A ButtonsDevice doesn't support switching off")
+          else device.turnOff().done()
 
     _getState: (device) =>
-      switch device.template
-        when "shutter" then false
-        when "buttons" then false
-        when "maxcul-heating-thermostat", "mythermostat", "thermostat" then device._temperatureSetpoint > device.config.ecoTemp
-        when "led-light" then device.power == 'on' || device.power == true
-        else device._state
+      if @_isHeating(device)
+        return device._temperatureSetpoint > device.config.ecoTemp
+      else
+        switch device.template
+          when "shutter" then false
+          when "buttons" then false
+          when "led-light" then device.power == 'on' || device.power == true
+          else device._state
 
     _getBrightness: (device) =>
       brightness = 0.0

@@ -13,6 +13,7 @@ describe "echo", ->
     it "should return true if device has a known template", ->
       assert plugin._isSupported({ template: template }) for template in plugin.switchTemplates
       assert plugin._isSupported({ template: template }) for template in plugin.dimmerTemplates
+      assert plugin._isSupported({ template: template }) for template in plugin.heatingTemplates
 
     it "should return false if template is unknown", ->
       assert plugin._isSupported({ template: "foo"}) is false
