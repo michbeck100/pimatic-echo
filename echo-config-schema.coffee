@@ -5,9 +5,11 @@ module.exports = {
     address:
       description: "The ip address network interface to use"
       type: "string"
+      required: false
     mac:
       description: "The MAC address of the network interface to use"
       type: "string"
+      required: false
     port:
       description: "The port of the hue emulation server"
       type: "integer"
