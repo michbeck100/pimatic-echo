@@ -4,6 +4,7 @@
   "author": "Michael Kotten <michaelkotten@gmail.com> (https://github.com/michbeck100/pimatic-echo)",
   "main": "echo.coffee",
   "files": [
+    "lib",
     "test",
     "echo.coffee",
     "README.md",
