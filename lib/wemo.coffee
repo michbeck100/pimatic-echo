@@ -25,7 +25,8 @@ module.exports = (env) =>
     addDevice: (device) =>
       return (deviceName, buttonId) =>
         switchCount = Object.keys(switches).length
-        deviceId = aguid(deviceName)
+        deviceId = if buttonId then aguid(deviceName + buttonId) else aguid(deviceName)
+
         switches[deviceId] = {
           id: deviceId,
           device: device,

@@ -45,7 +45,7 @@ module.exports = (env) =>
           throw new Error("unsupported device type: #{device.template})")
 
         if device.template is 'buttons'
-          addDevice(button.text, button.id) for button in device.config.buttons
+          addDevice(button.text, device.id + button.id) for button in device.config.buttons
         else
           addDevice(@_getDeviceName(device))
           for additionalName in @_getAdditionalNames(device)
