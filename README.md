@@ -8,7 +8,7 @@
 
 # pimatic-echo
 pimatic-echo is a [pimatic](https://github.com/pimatic/pimatic) plugin that enables Amazon's echo to control pimatic devices. 
-It does this by simulating WeMo switches and Philips Hue lights, which are natively supported by the echo. 
+It does this by simulating Philips Hue lights, which are natively supported by the echo. 
 All network communication happens on the local network, so pimatic doesn't have to be accessible from the internet.
 
 These device classes are supported currently:
