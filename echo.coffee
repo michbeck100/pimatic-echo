@@ -167,12 +167,6 @@ module.exports = (env) =>
             description: "Exclude this device. Deprecated in favor of active flag."
             type: "boolean"
             default: false
-          hueType:
-            description: "the Hue Type of the device"
-            type: "string"
-            required: no
-            enum: ['Dimmer', 'Switch']
-            default: "Dimmer"
           active:
             description: "make this device available for Alexa"
             type: "boolean"
