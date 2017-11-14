@@ -2,12 +2,8 @@ module.exports = (env) =>
 
   _ = require('lodash')
   async = require('async')
-  aguid = require('aguid')
   bodyParser = require('body-parser')
-  Boom = require('boom')
   express = require('express')
-  hapi = require('hapi')
-  hapiServer = new hapi.Server()
   udpServer = require('dgram').createSocket({ type: 'udp4', reuseAddr: true })
 
   class EchoPlugin extends env.plugins.Plugin
@@ -55,8 +51,7 @@ module.exports = (env) =>
 
       @framework.deviceManager.deviceConfigExtensions.push(new EchoDeviceConfigExtension())
 
-      switches = {}
-      dimmers = {}
+      devices = {}
 
       @framework.on 'deviceAdded', (device) =>
         addDevice = (deviceName, buttonId) => return # do nothing
@@ -64,12 +59,12 @@ module.exports = (env) =>
         if @_isExcluded(device)
           return
 
-        if @_isDimmer(device) || @_isHeating(device)
-          if Object.keys(dimmers).length <= 50
+        if @_isSupported(device)
+          if Object.keys(devices).length <= 50
             addDevice = (deviceName, buttonId) =>
-              uniqueId = ("0" + (Object.keys(dimmers).length + 1).toString(16))
+              uniqueId = ("0" + (Object.keys(devices).length + 1).toString(16))
                 .slice(-2).toUpperCase()
-              dimmers[uniqueId] = {
+              devices[uniqueId] = {
                 device: device,
                 name: deviceName,
                 uniqueId: "00:17:88:5E:D3:" + uniqueId + "-" + uniqueId,
@@ -88,21 +83,7 @@ module.exports = (env) =>
 
                   return JSON.stringify(response)
               }
-              env.logger.debug("successfully added device #{deviceName} as dimmable light")
-        else if @_isSwitch(device)
-          addDevice = (deviceName, buttonId) =>
-            switchCount = Object.keys(switches).length
-            deviceId = aguid(deviceName)
-            switches[deviceId] = {
-              id: deviceId,
-              device: device,
-              name: deviceName,
-              port: 12000 + switchCount,
-              handler: (state) =>
-                env.logger.debug("setting state of #{deviceName} to #{state}")
-                @_changeStateTo(device, state, buttonId)
-            }
-            env.logger.debug("successfully added device #{deviceName} as switch")
+              env.logger.debug("successfully added device #{deviceName}")
         else
           throw new Error("unsupported device type: #{device.template})")
         if device.template is 'buttons'
@@ -113,9 +94,8 @@ module.exports = (env) =>
             addDevice(additionalName)
 
       @framework.once "after init", =>
-
-        @_startDiscoveryServer(switches)
-        @_startEmulator(dimmers, switches)
+        @_startDiscoveryServer()
+        @_startEmulator(devices)
 
     _isSupported: (device) =>
       return @_isDimmer(device) || @_isSwitch(device) || @_isHeating(device)
@@ -225,7 +205,7 @@ module.exports = (env) =>
       env.logger.warn("No network interface found.")
       return null
 
-    _startDiscoveryServer: (switches) =>
+    _startDiscoveryServer: () =>
       udpServer.on 'error', (err) =>
         env.logger.error "server.error:\n#{err.message}"
         udpServer.close()
@@ -236,7 +216,7 @@ module.exports = (env) =>
           if msg.indexOf('ST: urn:schemas-upnp-org:device:basic:1') > 0 ||
               msg.indexOf('ST: upnp:rootdevice') > 0 || msg.indexOf('ST: ssdp:all') > 0
             env.logger.debug "<< server got: #{msg} from #{rinfo.address}:#{rinfo.port}"
-            async.eachSeries(@_getDiscoveryResponses(switches), (response, cb) =>
+            async.eachSeries(@_getDiscoveryResponses(), (response, cb) =>
               udpServer.send(response, 0, response.length, rinfo.port, rinfo.address, () =>
                 env.logger.debug ">> sent response ssdp discovery response: #{response}"
                 cb()
@@ -254,7 +234,7 @@ module.exports = (env) =>
 
       udpServer.bind(@upnpPort)
 
-    _startEmulator: (dimmers, switches) =>
+    _startEmulator: (devices) =>
 
       emulator = express()
       emulator.use bodyParser.urlencoded(limit: '1mb', extended: true)
@@ -291,7 +271,7 @@ module.exports = (env) =>
 
       emulator.get('/api/:userid/lights', (req, res) =>
         response = {}
-        _.forOwn(dimmers, (device, id) =>
+        _.forOwn(devices, (device, id) =>
           response[id] = @_getDeviceResponse(device)
         )
 
@@ -299,7 +279,7 @@ module.exports = (env) =>
       )
 
       emulator.get('/api/:userid/lights/:id', (req, res) =>
-        device = dimmers[req.params["id"]]
+        device = devices[req.params["id"]]
         if device
           res.status(200).send(JSON.stringify(@_getDeviceResponse(device)))
         else
@@ -307,74 +287,13 @@ module.exports = (env) =>
       )
 
       emulator.put('/api/:userid/lights/:id/state', (req, res) =>
-        device = dimmers[req.params["id"]]
+        device = devices[req.params["id"]]
         response = device.changeState(req.body)
         res.status(200).send(response)
       )
 
-      emulator.get('/:id/setup.xml', (req, res) =>
-        device = switches[req.params["id"]]
-        if device
-          res.setHeader("Content-Type", "application/xml; charset=utf-8")
-          res.status(200).send(@_getDeviceSetup(device))
-        else
-          res.status(404).send("Not found")
-      )
-
-      emulator.post('/upnp/control/basicevent1', bodyParser.text({type: 'text/*'}), (req, res) =>
-
-        portNumber = Number(req.headers.host.split(':')[1])
-        device = _.find(switches, (d) => d.port == portNumber)
-
-        soapAction = req.headers['soapaction']
-
-        #env.logger.debug req.body
-        #env.logger.debug soapAction
-
-        if soapAction.indexOf('GetBinaryState') > 0
-          res.setHeader("Content-Type", "application/xml; charset=utf-8")
-          res.status(200).send("""
-<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
-    s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
- <s:Body>
-   <u:GetBinaryStateResponse xmlns:u="urn:Belkin:service:basicevent:1">
-     <BinaryState>#{if @_getState(device.device) then "1" else "0"}</BinaryState>
-   </u:GetBinaryStateResponse>
- </s:Body>
-</s:Envelope>
-""")
-        else if soapAction.indexOf('SetBinaryState') > 0
-          if req.body.indexOf('<BinaryState>1</BinaryState>') > 0
-            state = on
-          else if req.body.indexOf('<BinaryState>0</BinaryState>') > 0
-            state = off
-          else
-            throw new Error("no state found in payload")
-          env.logger.debug "Action received for device: #{device.name} state: #{state}"
-          device.handler(state)
-          res.setHeader("Content-Type", "application/xml; charset=utf-8")
-          res.status(200).send("""
-<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
-    s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
- <s:Body>
-   <u:SetBinaryStateResponse xmlns:u="urn:Belkin:service:basicevent:1">
-     <BinaryState>#{if state then "1" else "0"}</BinaryState>
-   </u:SetBinaryStateResponse>
- </s:Body>
-</s:Envelope>
-""")
-        else
-          throw new Error("unsupported soap action: #{soapAction}")
-      )
-
       emulator.listen(@serverPort, () =>
         env.logger.info "started hue emulator on port #{@serverPort}"
-      )
-
-      _.forOwn(switches, (device, id) =>
-        emulator.listen(device.port, () =>
-          env.logger.info "started wemo emulator for device #{device.name} on port #{device.port}"
-        )
       )
 
     _getDeviceResponse: (device) =>
@@ -452,7 +371,7 @@ module.exports = (env) =>
 
     _getHueSetup: (deviceId, friendlyName, port) =>
 
-    _getDiscoveryResponses: (switches) =>
+    _getDiscoveryResponses: () =>
       bridgeId = @_getHueBridgeIdFromMac()
       bridgeSNUUID = @_getSNUUIDFromMac()
       apiVersion = '1.19.0'
@@ -497,22 +416,6 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
       responses.push(new Buffer(responseTemplate1))
       responses.push(new Buffer(responseTemplate2))
       responses.push(new Buffer(responseTemplate3))
-
-      _.forOwn(switches, (v, k) =>
-        responseString = """
-HTTP/1.1 200 OK
-CACHE-CONTROL: max-age=86400
-DATE: 2016-10-29
-EXT:
-LOCATION: http://#{@ipAddress}:#{v.port}/#{k}/setup.xml
-OPT: "http://schemas.upnp.org/upnp/1/0/"; ns=01
-01-NLS: #{@bootId}
-SERVER: Unspecified, UPnP/1.0, Unspecified
-ST: urn:Belkin:device:**
-USN: uuid:Socket-1_0-#{k}::urn:Belkin:device:**\r\n\r\n
-"""
-        responses.push(new Buffer(responseString))
-      )
 
       return responses
 

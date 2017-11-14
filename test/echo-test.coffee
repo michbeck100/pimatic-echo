@@ -95,7 +95,7 @@ describe "echo", ->
       assert additionalNames[0] is "1"
       assert additionalNames[1] is "2"
 
-  describe "turnOn", ->
+  describe "_turnOn", ->
 
     it "should call moveUp for shutter device", ->
       wasCalled = false
@@ -135,7 +135,23 @@ describe "echo", ->
       plugin._turnOn(device)
       assert wasCalled
 
-  describe "turnOff", ->
+    it "should call changeTemperatureTo for heating template", ->
+      for template in plugin.heatingTemplates
+        wasCalled = false
+        device = {
+          config: {
+            comfyTemp: 20
+          }
+          template: template
+          changeTemperatureTo: (temp) =>
+            assert temp is 20
+            wasCalled = true
+            return Promise.resolve()
+        }
+        plugin._turnOn(device)
+        assert wasCalled
+
+  describe "_turnOff", ->
 
     it "should call moveDown for shutter device", ->
       wasCalled = false
@@ -174,3 +190,64 @@ describe "echo", ->
       }
       plugin._turnOff(device)
       assert wasCalled
+
+    it "should call changeTemperatureTo for heating template", ->
+      for template in plugin.heatingTemplates
+        wasCalled = false
+        device = {
+          config: {
+            ecoTemp: 16
+          }
+          template: template
+          changeTemperatureTo: (temp) =>
+            assert temp is 16
+            wasCalled = true
+            return Promise.resolve()
+        }
+        plugin._turnOff(device)
+        assert wasCalled
+
+  describe "_getState", ->
+
+    it "should return true if temperature is higher than ecoTemp for heating template", ->
+      for template in plugin.heatingTemplates
+        device = {
+          _temperatureSetpoint: 21
+          config: {
+            ecoTemp: 16
+          }
+          template: template
+        }
+        assert plugin._getState(device) is true
+
+    it "should return false if temperature is lower or equal than ecoTemp for heating template", ->
+      for template in plugin.heatingTemplates
+        device = {
+          _temperatureSetpoint: 16
+          config: {
+            ecoTemp: 16
+          }
+          template: template
+        }
+        assert plugin._getState(device) is false
+        device._temperatureSetpoint = 15
+        assert plugin._getState(device) is false
+
+    it "should return power of led-light template", ->
+      device = {
+        template: "led-light"
+        power: 'on'
+      }
+      assert plugin._getState(device) is true
+      device.power = true
+      assert plugin._getState(device) is true
+
+    it "should return power of led-light template", ->
+      for template in plugin.dimmerTemplates.filter((t) -> t != "led-light")
+        device = {
+          template: template
+          _state: true
+        }
+        assert plugin._getState(device) is true
+        device._state = false
+        assert plugin._getState(device) is false

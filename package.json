@@ -23,12 +23,9 @@
     "test": "grunt test"
   },
   "dependencies": {
-    "aguid": "^2.0.0",
     "async": "^2.1.2",
     "body-parser": "^1.15.2",
-    "boom": "^4.2.0",
     "express": "^4.14.0",
-    "hapi": "^15.2.0",
     "lodash": "^4.16.4"
   },
   "devDependencies": {
