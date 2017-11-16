@@ -217,7 +217,8 @@ module.exports = (env) =>
             env.logger.debug "<< server got: #{msg} from #{rinfo.address}:#{rinfo.port}"
             async.eachSeries(@_getDiscoveryResponses(), (response, cb) =>
               udpServer.send(response, 0, response.length, rinfo.port, rinfo.address, () =>
-                env.logger.debug ">> sent response ssdp discovery response: #{response}"
+                if @config.trace
+                  env.logger.debug ">> sent response ssdp discovery response: #{response}"
                 cb()
               )
             , (err) =>
@@ -235,14 +236,15 @@ module.exports = (env) =>
 
     _startEmulator: (devices) =>
       emulator = express()
-      emulator.use bodyParser.urlencoded(limit: '1mb', extended: true)
+      emulator.use bodyParser.json(type: "application/x-www-form-urlencoded", limit: '1mb')
       emulator.use bodyParser.json(limit: '1mb')
 
-      if @config.debug
+      if @config.trace
         logger = (req, res, next) =>
           env.logger.debug "Request to #{req.originalUrl}"
           if Object.keys(req.body).length > 0
             env.logger.debug "Payload: #{@toJSON(req.body)}"
+          env.logger.debug "Headers: #{@toJSON(req.headers)}"
           next()
         emulator.use(logger)
 
@@ -286,7 +288,7 @@ module.exports = (env) =>
           res.status(404).send("Not found")
       )
 
-      emulator.put('/api/:userid/lights/:id/state', bodyParser.json(), (req, res) =>
+      emulator.put('/api/:userid/lights/:id/state', (req, res) =>
         device = devices[req.params["id"]]
         response = device.changeState(req.body)
         res.setHeader("Content-Type", "application/json")

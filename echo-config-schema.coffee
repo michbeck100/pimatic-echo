@@ -26,5 +26,9 @@ module.exports = {
       description: "Enable debug output"
       type: "boolean"
       default: false
+    trace:
+      description: "Enable debug output"
+      type: "boolean"
+      default: false
   }
 }
