@@ -69,7 +69,7 @@ module.exports = (env) =>
                 name: deviceName,
                 uniqueId: "00:17:88:5E:D3:" + uniqueId + "-" + uniqueId,
                 changeState: (state) =>
-                  env.logger.debug("changing state for #{deviceName}: #{JSON.stringify(state)}")
+                  env.logger.debug("changing state for #{deviceName}: #{@toJSON(state)}")
                   state = JSON.parse(Object.keys(state)[0])
                   response = []
                   if state.bri?
@@ -81,7 +81,7 @@ module.exports = (env) =>
                   response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
                   response.push({ "success": { "/lights/#{uniqueId}/state/bri" : state.bri }})
 
-                  return JSON.stringify(response)
+                  return @toJSON(response)
               }
               env.logger.debug("successfully added device #{deviceName}")
         else
@@ -224,7 +224,7 @@ module.exports = (env) =>
             , (err) =>
               env.logger.debug "complete sending all responses."
               if err
-                env.logger.debug "Received error: #{JSON.stringify(err)}"
+                env.logger.debug "Received error: #{@toJSON(err)}"
             )
 
       udpServer.on 'listening', () =>
@@ -244,7 +244,7 @@ module.exports = (env) =>
         logger = (req, res, next) =>
           env.logger.debug "Request to #{req.originalUrl}"
           if Object.keys(req.body).length > 0
-            env.logger.debug "Payload: #{JSON.stringify(req.body)}"
+            env.logger.debug "Payload: #{@toJSON(req.body)}"
           next()
         emulator.use(logger)
 
@@ -266,7 +266,7 @@ module.exports = (env) =>
       emulator.post('/api', (req, res) =>
         response = []
         response.push({ "success": { "username": "83b7780291a6ceffbe0bd049104df"}})
-        res.status(200).send(JSON.stringify(response))
+        res.status(200).send(@toJSON(response))
       )
 
       emulator.get('/api/:userid/lights', (req, res) =>
@@ -275,13 +275,13 @@ module.exports = (env) =>
           response[id] = @_getDeviceResponse(device)
         )
 
-        res.status(200).send(JSON.stringify(response))
+        res.status(200).send(@toJSON(response))
       )
 
       emulator.get('/api/:userid/lights/:id', (req, res) =>
         device = devices[req.params["id"]]
         if device
-          res.status(200).send(JSON.stringify(@_getDeviceResponse(device)))
+          res.status(200).send(@toJSON(@_getDeviceResponse(device)))
         else
           res.status(404).send("Not found")
       )
@@ -463,6 +463,8 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
       response += "</root>"
       return response
 
+    toJSON: (json) =>
+      return JSON.stringify(json, null, 2)
 
   class EchoDeviceConfigExtension
     configSchema:
