@@ -70,16 +70,15 @@ module.exports = (env) =>
                 uniqueId: "00:17:88:5E:D3:" + uniqueId + "-" + uniqueId,
                 changeState: (state) =>
                   env.logger.debug("changing state for #{deviceName}: #{@toJSON(state)}")
-                  state = JSON.parse(Object.keys(state)[0])
                   response = []
                   if state.bri?
                     env.logger.debug("setting brightness of #{deviceName} to #{state.bri}")
                     @_setBrightness(device, state.bri)
+                    response.push({ "success": { "/lights/#{uniqueId}/state/bri" : state.bri }})
                   else if state.on?
                     env.logger.debug("setting state of #{deviceName} to #{state.on}")
                     @_changeStateTo(device, state.on, buttonId)
-                  response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
-                  response.push({ "success": { "/lights/#{uniqueId}/state/bri" : state.bri }})
+                    response.push({ "success": { "/lights/#{uniqueId}/state/on" : state.on }})
 
                   return @toJSON(response)
               }
@@ -235,7 +234,6 @@ module.exports = (env) =>
       udpServer.bind(@upnpPort)
 
     _startEmulator: (devices) =>
-
       emulator = express()
       emulator.use bodyParser.urlencoded(limit: '1mb', extended: true)
       emulator.use bodyParser.json(limit: '1mb')
@@ -266,6 +264,7 @@ module.exports = (env) =>
       emulator.post('/api', (req, res) =>
         response = []
         response.push({ "success": { "username": "83b7780291a6ceffbe0bd049104df"}})
+        res.setHeader("Content-Type", "application/json")
         res.status(200).send(@toJSON(response))
       )
 
@@ -274,21 +273,23 @@ module.exports = (env) =>
         _.forOwn(devices, (device, id) =>
           response[id] = @_getDeviceResponse(device)
         )
-
+        res.setHeader("Content-Type", "application/json")
         res.status(200).send(@toJSON(response))
       )
 
       emulator.get('/api/:userid/lights/:id', (req, res) =>
         device = devices[req.params["id"]]
         if device
+          res.setHeader("Content-Type", "application/json")
           res.status(200).send(@toJSON(@_getDeviceResponse(device)))
         else
           res.status(404).send("Not found")
       )
 
-      emulator.put('/api/:userid/lights/:id/state', (req, res) =>
+      emulator.put('/api/:userid/lights/:id/state', bodyParser.json(), (req, res) =>
         device = devices[req.params["id"]]
         response = device.changeState(req.body)
+        res.setHeader("Content-Type", "application/json")
         res.status(200).send(response)
       )
 
