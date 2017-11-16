@@ -42,13 +42,16 @@ To install the plugin just add the plugin to the config.json of pimatic:
 
 ```json
     {
-      "plugin": "echo"   
+      "plugin": "echo" 
     }
 ```
 
 This will fetch the most recent version from npm-registry on the next pimatic start and install the plugin.
 
 After that you tell your Amazon echo to search for your devices or use the [web frontend](http://alexa.amazon.de/spa/index.html#smart-home).
+
+For configuration parameters of pimatic-echo and their documentation please see the 
+[plugin config schema](https://github.com/michbeck100/pimatic-echo/blob/master/echo-config-schema.coffee). 
 
 #### Configuration
 The configuration of pimatic can be extended by adding an attribute called "echo" on every supported device.
