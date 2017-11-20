@@ -76,6 +76,24 @@ describe "echo", ->
             name: expected
       }) is expected
 
+    it "should return device name is name is empty", ->
+      expected = "devicename"
+      assert plugin._getDeviceName({
+        name: expected
+        config:
+          echo:
+            name: ""
+      }) is expected
+
+    it "should return device name is echo config is missing", ->
+      expected = "devicename"
+      assert plugin._getDeviceName({
+        name: expected
+        config:
+          foo:
+            name: ""
+      }) is expected
+
   describe "_getAdditionalNames", ->
 
     it "should return empty list no config exists", ->

@@ -123,10 +123,7 @@ module.exports = (env) =>
       return true
 
     _getDeviceName: (device) =>
-      if device.config.echo?.name?
-        return device.config.echo.name
-      else
-        return device.name
+      return if !!device.config.echo?.name then device.config.echo.name else device.name
 
     _getAdditionalNames: (device) =>
       if device.config.echo?.additionalNames?
@@ -478,7 +475,7 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
           name:
             description: "change the name of your device"
             type: "string"
-            required: no
+            default: ""
           additionalNames:
             description: "additional names for your device"
             type: "array"
