@@ -294,6 +294,8 @@ module.exports = (env) =>
 
       emulator.listen(@serverPort, () =>
         env.logger.info "started hue emulator on port #{@serverPort}"
+      ).on('error', () =>
+        env.logger.error "Error starting hue emulator. Port #{@serverPort} is not available."
       )
 
     _getDeviceResponse: (device) =>

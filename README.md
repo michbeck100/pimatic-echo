@@ -53,6 +53,9 @@ After that you tell your Amazon echo to search for your devices or use the [web 
 For configuration parameters of pimatic-echo and their documentation please see the 
 [plugin config schema](https://github.com/michbeck100/pimatic-echo/blob/master/echo-config-schema.coffee). 
 
+Please note that pimatic-echo will use port 80 by default, as this is needed for the newer echo, 
+so make sure that this port is either free or change it to another free port. 
+
 #### Configuration
 The configuration of pimatic can be extended by adding an attribute called "echo" on every supported device.
 

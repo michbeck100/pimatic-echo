@@ -13,7 +13,7 @@ module.exports = {
     port:
       description: "The port of the hue emulation server"
       type: "integer"
-      default: 9876
+      default: 80
     comfyTemp:
       description: "The comfort mode temperature"
       type: "integer"
