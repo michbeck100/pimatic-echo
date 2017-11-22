@@ -166,7 +166,7 @@ module.exports = (env) =>
         return device._temperatureSetpoint > device.config.ecoTemp
       else
         switch device.template
-          when "shutter" then false
+          when "shutter" then device._position == 'up'
           when "buttons" then false
           when "led-light" then device.power == 'on' || device.power == true
           else device._state

@@ -269,3 +269,13 @@ describe "echo", ->
         assert plugin._getState(device) is true
         device._state = false
         assert plugin._getState(device) is false
+
+    it "should return true if position of shutter is up", ->
+      device = {
+        template: "shutter"
+        _position: 'up'
+      }
+      assert plugin._getState(device) is true
+      device._position = 'down'
+      assert plugin._getState(device) is false
+
