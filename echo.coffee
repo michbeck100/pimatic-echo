@@ -1,5 +1,6 @@
 module.exports = (env) =>
 
+  crypto = require('crypto')
   _ = require('lodash')
   async = require('async')
   bodyParser = require('body-parser')
@@ -182,15 +183,15 @@ module.exports = (env) =>
         brightness = if @_getState(device) then 100.0 else 0.0
       else if @_isHeating(device)
         brightness = device._temperatureSetpoint
-      return Math.round(brightness / 100 * 255.0)
+      return brightness / 100 * 254
 
     _setBrightness: (device, dimLevel, buttonId) =>
       if device.hasAction("changeDimlevelTo")
-        device.changeDimlevelTo(Math.round(dimLevel / 255.0 * 100.0)).done()
+        device.changeDimlevelTo(dimLevel / 254 * 100).done()
       else if @_isSwitch(device)
         @_changeStateTo(device, dimLevel > 0, buttonId)
       else if @_isHeating(device)
-        device.changeTemperatureTo(Math.round(dimLevel / 255.0 * 100 )).done()
+        device.changeTemperatureTo(dimLevel / 254 * 100).done()
 
     _getNetworkInfo: =>
       networkInterfaces = require('os').networkInterfaces()
@@ -214,8 +215,7 @@ module.exports = (env) =>
             env.logger.debug "<< server got: #{msg} from #{rinfo.address}:#{rinfo.port}"
             async.eachSeries(@_getDiscoveryResponses(), (response, cb) =>
               udpServer.send(response, 0, response.length, rinfo.port, rinfo.address, () =>
-                if @config.trace
-                  env.logger.debug ">> sent response ssdp discovery response: #{response}"
+                @trace ">> sent response ssdp discovery response: #{response}"
                 cb()
               )
             , (err) =>
@@ -232,13 +232,42 @@ module.exports = (env) =>
       udpServer.bind(@upnpPort)
 
     _startEmulator: (devices) =>
-      emulator = express()
+      if @framework.app.httpServer? && @framework.config.settings.httpServer?.port == @serverPort
+        env.logger.debug 'reusing the express instance of pimatic'
+        emulator = @framework.app
+        @framework.userManager.addAllowPublicAccessCallback((req) =>
+          #env.logger.debug "check access for #{req.method} #{req.path}"
+          allowedPaths = switch req.method
+            when 'GET' then [
+              /\/description.xml/,
+              /\/favicon.ico/,
+              /\/hue_logo_0.png/,
+              /\/hue_logo_3.png/,
+              /\/api\/.+\/lights/,
+              /\/api\/.+\/lights\/\d+/
+            ]
+            when 'POST' then [/\/api/]
+            when 'PUT' then [/\/api\/.+\/lights\/\d+\/state/]
+            else []
+          allowed = _.some(allowedPaths, (regex) ->
+            return regex.test(req.path)
+          )
+          #env.logger.debug "#{req.method} access to #{req.path} is #{allowed}"
+          return allowed
+        )
+      else
+        emulator = express()
+        emulator.listen(@serverPort, () =>
+          env.logger.info "started hue emulator on port #{@serverPort}"
+        ).on('error', () =>
+          env.logger.error "Error starting hue emulator. Port #{@serverPort} is not available."
+        )
       emulator.use bodyParser.json(type: "application/x-www-form-urlencoded", limit: '1mb')
       emulator.use bodyParser.json(limit: '1mb')
 
       if @config.trace
         logger = (req, res, next) =>
-          env.logger.debug "Request to #{req.originalUrl}"
+          env.logger.debug "#{req.method} Request to #{req.originalUrl}"
           if Object.keys(req.body).length > 0
             env.logger.debug "Payload: #{@toJSON(req.body)}"
           env.logger.debug "Headers: #{@toJSON(req.headers)}"
@@ -262,7 +291,7 @@ module.exports = (env) =>
 
       emulator.post('/api', (req, res) =>
         response = []
-        response.push({ "success": { "username": "83b7780291a6ceffbe0bd049104df"}})
+        response.push({ "success": { "username": crypto.randomBytes(20).toString('hex')}})
         res.setHeader("Content-Type", "application/json")
         res.status(200).send(@toJSON(response))
       )
@@ -277,11 +306,15 @@ module.exports = (env) =>
       )
 
       emulator.get('/api/:userid/lights/:id', (req, res) =>
-        device = devices[req.params["id"]]
+        deviceId = req.params["id"]
+        device = devices[deviceId]
         if device
           res.setHeader("Content-Type", "application/json")
-          res.status(200).send(@toJSON(@_getDeviceResponse(device)))
+          deviceResponse = @toJSON(@_getDeviceResponse(device))
+          @trace "reponse for #{req.path}: #{deviceResponse}"
+          res.status(200).send(deviceResponse)
         else
+          env.logger.warn("device with id #{deviceId} not found")
           res.status(404).send("Not found")
       )
 
@@ -290,12 +323,6 @@ module.exports = (env) =>
         response = device.changeState(req.body)
         res.setHeader("Content-Type", "application/json")
         res.status(200).send(response)
-      )
-
-      emulator.listen(@serverPort, () =>
-        env.logger.info "started hue emulator on port #{@serverPort}"
-      ).on('error', () =>
-        env.logger.error "Error starting hue emulator. Port #{@serverPort} is not available."
       )
 
     _getDeviceResponse: (device) =>
@@ -467,6 +494,9 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
 
     toJSON: (json) =>
       return JSON.stringify(json, null, 2)
+
+    trace: (message) =>
+      if @config.trace then env.logger.debug message
 
   class EchoDeviceConfigExtension
     configSchema:
