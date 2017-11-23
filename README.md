@@ -85,6 +85,15 @@ To make devices available to Alexa, just set the "active" flag to true. You must
 
 Please make sure that pimatic-echo is placed at the top of the plugins configuration. This helps avoiding misleading error messages, that the echo configuration is unsupported and also enables the configuration via web ui.
 
+### Frequently Asked Questions
+ 
+- [Alexa doesn't find any devices. What's wrong?](#Alexa-doesnt-find-any-devices-whats-wrong)
+
+##### Alexa doesn't find any devices. What's wrong?
+
+* If you are using an Echo or Echo plus, make sure you have configured pimatic-echo to use port 80. Also make that the port isn't used already.
+* Just try to scan again. Sometimes Alexa needs another try to find all devices.
+
 ### Sponsoring
 
 Do you like this plugin? Then consider a donation to support development.
