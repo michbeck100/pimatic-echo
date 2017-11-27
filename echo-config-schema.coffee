@@ -2,8 +2,15 @@ module.exports = {
   title: "pimatic-echo config",
   type: "object",
   properties: {
+    pairingEnabled:
+      description: "Turn on pairing of devices"
+      type: "boolean"
+      default: false
     address:
-      description: "The ip address network interface to use"
+      description: """
+The ip address of the network interface to use (for systems with multiple addresses).
+Otherwise the first non loopback addres will be used.
+"""
       type: "string"
       required: false
     mac:
@@ -26,9 +33,6 @@ module.exports = {
       description: "Enable debug output"
       type: "boolean"
       default: false
-    trace:
-      description: "Enable debug output"
-      type: "boolean"
-      default: false
+
   }
 }

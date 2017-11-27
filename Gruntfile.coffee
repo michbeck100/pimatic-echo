@@ -12,7 +12,7 @@ module.exports = (grunt) ->
         no_trailing_whitespace:
           level: "ignore"
         max_line_length:
-          value: 100
+          value: 120
         indentation:
           value: 2
           level: "error"

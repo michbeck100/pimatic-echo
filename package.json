@@ -23,10 +23,12 @@
     "test": "grunt test"
   },
   "dependencies": {
+    "aguid": "^2.0.0",
     "async": "^2.1.2",
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
-    "lodash": "^4.16.4"
+    "lodash": "^4.16.4",
+    "uuid": "^3.1.0"
   },
   "devDependencies": {
     "blanket": "^1.2.2",
