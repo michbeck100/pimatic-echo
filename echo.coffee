@@ -58,7 +58,7 @@ module.exports = (env) =>
         )
 
     _isActive: (device) =>
-      return !!device.config.echo?.active
+      return device.config.echo?.active is true
 
     _getDeviceName: (device) =>
       return if !!device.config.echo?.name then device.config.echo.name else device.name

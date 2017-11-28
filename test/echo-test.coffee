@@ -5,15 +5,13 @@ Promise = require 'bluebird'
 env = require("../node_modules/pimatic/startup").env
 
 describe "echo", ->
-
   plugin = require("../echo")(env)
 
   describe "_isActive", ->
-
     it "should return false if no echo config exists", ->
       device = {
         template: "switch"
-        config : {}
+        config: {}
       }
       assert plugin._isActive(device) is false
 
@@ -33,7 +31,6 @@ describe "echo", ->
       }) is true
 
   describe "_getDeviceName", ->
-
     it "should return device name if no config exists", ->
       expected = "devicename"
       assert plugin._getDeviceName({
@@ -70,7 +67,6 @@ describe "echo", ->
       }) is expected
 
   describe "_getAdditionalNames", ->
-
     it "should return empty list no config exists", ->
       assert plugin._getAdditionalNames({
         name: "device"
@@ -89,3 +85,33 @@ describe "echo", ->
       assert additionalNames[1] is "2"
 
 
+  describe "_isActive", ->
+    it "should return false if active is false", ->
+      assert plugin._isActive({
+        config: {
+          echo: {
+            active: false
+          }
+        }
+      }) is false
+
+    it "should return true if active is true", ->
+      assert plugin._isActive({
+        config: {
+          echo: {
+            active: true
+          }
+        }
+      }) is true
+
+    it "should return false if config is missing", ->
+      assert plugin._isActive({
+        config: {
+
+        }
+      }) is false
+      assert plugin._isActive({
+        config: {
+          echo: {}
+        }
+      }) is false
