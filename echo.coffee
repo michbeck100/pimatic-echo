@@ -3,6 +3,7 @@ module.exports = (env) =>
   _ = require('lodash')
   bodyParser = require('body-parser')
   express = require('express')
+  Promise = require('bluebird')
 
   UpnpServer = require('./lib/upnp')(env)
   HueEmulator = require('./lib/hue')(env)
@@ -46,6 +47,15 @@ module.exports = (env) =>
         server = @_startServer(serverPort)
 
         hueEmulator.start(server)
+
+      @framework.deviceManager.on "discover", (eventData) =>
+        @framework.deviceManager.discoverMessage("pimatic-echo",
+          "Pairing mode is enabled for 20 seconds. Let Alexa scan for devices now.")
+        hueEmulator.pairingEnabled = true
+        Promise.delay(20000).then(() => hueEmulator.pairingEnabled = false ).then(
+          () => @framework.deviceManager.discoverMessage("pimatic-echo",
+            "Pairing mode is disabled again.")
+        )
 
     _isActive: (device) =>
       return !!device.config.echo?.active

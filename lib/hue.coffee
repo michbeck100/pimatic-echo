@@ -3,7 +3,7 @@ module.exports = (env) =>
   bodyParser = require('body-parser')
   fs = require('fs')
   uuid = require('uuid/v4')
-  Promise = require 'bluebird'
+  Promise = require('bluebird')
 
   Emulator = require('./emulator')(env)
 
@@ -328,6 +328,7 @@ module.exports = (env) =>
       if username in users
         return true
       else
+        env.logger.debug("Pairing is disabled and user #{username} was not found")
         res.status(401).send(JSON.stringify({
           "error": {
             "type": 1,
@@ -343,6 +344,7 @@ module.exports = (env) =>
       if username not in users
         users.push(username)
         fs.appendFileSync('echoUsers', username + '\n')
+        env.logger.debug("added user #{username}")
       return username
 
     _readUsers: () =>
