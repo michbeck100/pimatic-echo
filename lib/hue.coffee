@@ -69,6 +69,12 @@ module.exports = (env) =>
       return device.template in @heatingTemplates
 
     _changeState: (device, state) =>
+
+      try
+        # some echoes send strange json
+        state = JSON.parse(Object.keys(state)[0])
+      catch e
+
       env.logger.debug("changing state for #{device.name}: #{@_toJSON(state)}")
       if state.bri?
         env.logger.debug("setting brightness of #{device.name} to #{state.bri}")
