@@ -52,7 +52,7 @@ HOST: 239.255.255.250:#{@upnpPort}
 EXT:
 CACHE-CONTROL: max-age=100
 LOCATION: http://#{@ipAddress}:#{@serverPort}/description.xml
-SERVER: FreeRTOS/7.4.2, UPnP/1.0, IpBridge/1.15.0
+SERVER: FreeRTOS/7.4.2, UPnP/1.0, IpBridge/1.19.0
 hue-bridgeid: #{bridgeId}
 ST: #{st}
 USN: uuid:#{uuidPrefix}#{bridgeSNUUID}::upnp:rootdevice\r\n\r\n

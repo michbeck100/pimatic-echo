@@ -43,8 +43,7 @@ module.exports = (env) =>
     addDevice: (device) =>
       if Object.keys(devices).length <= 50
         return (deviceName, buttonId) =>
-          uniqueId = ("0" + (Object.keys(devices).length + 1).toString(16))
-            .slice(-2).toUpperCase()
+          uniqueId = (Object.keys(devices).length + 1).toString()
           devices[uniqueId] = {
             device: device,
             name: deviceName,
@@ -73,12 +72,14 @@ module.exports = (env) =>
       env.logger.debug("changing state for #{device.name}: #{@_toJSON(state)}")
       if state.bri?
         env.logger.debug("setting brightness of #{device.name} to #{state.bri}")
-        return @_setBrightness(device.device, state.bri)
-          .then(() -> Promise.resolve({ "success": { "/lights/#{device.uniqueId}/state/bri" : state.bri }}))
+        return @_setBrightness(device.device, state.bri).then(() ->
+          Promise.resolve({"success": {"/lights/#{device.uniqueId}/state/bri": state.bri}})
+        )
       else if state.on?
         env.logger.debug("setting state of #{device.name} to #{state.on}")
-        return @changeStateTo(device.device, state.on, device.buttonId)
-          .then(() -> Promise.resolve({ "success": { "/lights/#{device.uniqueId}/state/on" : state.on }}))
+        return @changeStateTo(device.device, state.on, device.buttonId).then(() ->
+          Promise.resolve({"success": {"/lights/#{device.uniqueId}/state/on": state.on}})
+        )
       return Promise.resolve()
 
     _turnOn: (device, buttonId) =>
@@ -104,7 +105,8 @@ module.exports = (env) =>
         return switch device.template
           when "shutter" then device.moveDown()
           when "buttons" then Promise.resolve()
-          else device.turnOff()
+          else
+            device.turnOff()
 
     _getState: (device) =>
       if @_isHeating(device)
@@ -114,7 +116,8 @@ module.exports = (env) =>
           when "shutter" then device._position == 'up'
           when "buttons" then false
           when "led-light" then device.power == 'on' || device.power == true
-          else device._state
+          else
+            device._state
 
 
     _getBrightness: (device) =>
@@ -128,64 +131,15 @@ module.exports = (env) =>
         brightness = if @_getState(device) then 100.0 else 0.0
       else if @_isHeating(device)
         brightness = device._temperatureSetpoint
-      return brightness / 100 * 254
+      return brightness / 100 * 255
 
     _setBrightness: (device, dimLevel, buttonId) =>
       if device.hasAction("changeDimlevelTo")
-        return device.changeDimlevelTo(dimLevel / 254 * 100)
+        return device.changeDimlevelTo(dimLevel / 255 * 100)
       else if @_isSwitch(device)
         return @changeStateTo(device, dimLevel > 0, buttonId)
       else if @_isHeating(device)
-        return device.changeTemperatureTo(dimLevel / 254 * 100)
-
-    getDiscoveryResponses: () =>
-      responses = []
-      bridgeId = @_getHueBridgeIdFromMac()
-      bridgeSNUUID = @_getSNUUIDFromMac()
-      apiVersion = '1.19.0'
-      uuidPrefix = '2f402f80-da50-11e1-9b23-'
-      host = '239.255.255.250'
-
-      responseTemplate1 = """
-HTTP/1.1 200 OK
-HOST: #{host}:#{@upnpPort}
-CACHE-CONTROL: max-age=100
-EXT:
-LOCATION: http://#{@ipAddress}:#{@serverPort}/description.xml
-SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/#{apiVersion}
-hue-bridgeid: #{bridgeId}
-ST: upnp:rootdevice
-USN: uuid:#{uuidPrefix}#{bridgeSNUUID}::upnp:rootdevice\r\n\r\n
-"""
-      responseTemplate2 = """
-HTTP/1.1 200 OK
-HOST: #{host}:#{@upnpPort}
-CACHE-CONTROL: max-age=100
-EXT:
-LOCATION: http://#{@ipAddress}:#{@serverPort}/description.xml
-SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/#{apiVersion}
-hue-bridgeid: #{bridgeId}
-ST: uuid:#{uuidPrefix}#{bridgeSNUUID}
-USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
-"""
-
-      responseTemplate3 = """
-HTTP/1.1 200 OK
-HOST: #{host}:#{@upnpPort}
-CACHE-CONTROL: max-age=100
-LOCATION: http://#{@ipAddress}:#{@serverPort}/description.xml
-SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/#{apiVersion}
-hue-bridgeid: #{bridgeId}
-ST: urn:schemas-upnp-org:device:basic:1
-USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
-"""
-
-      responses.push(new Buffer(responseTemplate1))
-      responses.push(new Buffer(responseTemplate2))
-      responses.push(new Buffer(responseTemplate3))
-
-
-      return responses
+        return device.changeTemperatureTo(dimLevel / 255 * 100)
 
     _getSNUUIDFromMac: =>
       return @macAddress.replace(/:/g, '').toLowerCase()
@@ -193,7 +147,7 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
     _getHueBridgeIdFromMac: =>
       cleanMac = @_getSNUUIDFromMac()
       bridgeId =
-        cleanMac.substring(0,6).toUpperCase() + 'FFFE' + cleanMac.substring(6).toUpperCase()
+        cleanMac.substring(0, 6).toUpperCase() + 'FFFE' + cleanMac.substring(6).toUpperCase()
       return bridgeId
 
     start: (emulator) =>
@@ -216,7 +170,7 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
         res.setHeader("Content-Type", "application/json")
         if @pairingEnabled
           username = @_addUser(req.body.username)
-          res.status(200).send(@_toJSON({ "success": { "username": username}}))
+          res.status(200).send(@_toJSON([{"success": {"username": username}}]))
         else
           res.status(401).send(JSON.stringify({
             "error": {
@@ -227,6 +181,17 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
           }))
       )
 
+      emulator.get('/api/:userid', (req, res) =>
+        if @_authorizeUser(req.params["userid"], req, res)
+          res.setHeader("Content-Type", "application/json")
+          lights = {}
+          _.forOwn(devices, (device, id) =>
+            lights[id] = @_getDeviceResponse(device)
+          )
+          res.status(200).send(@_toJSON({
+            lights
+          }))
+      )
 
       emulator.get('/api/:userid/lights', (req, res) =>
         if @_authorizeUser(req.params["userid"], req, res)
@@ -240,19 +205,27 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
 
       emulator.get('/api/:userid/lights/:id', (req, res) =>
         if @_authorizeUser(req.params["userid"], req, res)
-          device = devices[req.params["id"]]
+          deviceId = req.params["id"]
+          device = devices[deviceId]
           if device
             res.setHeader("Content-Type", "application/json")
             deviceResponse = @_toJSON(@_getDeviceResponse(device))
             res.status(200).send(deviceResponse)
           else
             env.logger.warn("device with id #{deviceId} not found")
-            res.status(404).send("Not found")
+            res.status(404).send(JSON.stringify({
+              "error": {
+                "type": 3,
+                "address": req.path,
+                "description": "Light #{deviceId} does not exist."
+              }
+            }))
       )
 
       emulator.put('/api/:userid/lights/:id/state', (req, res) =>
         if @_authorizeUser(req.params["userid"], req, res)
-          device = devices[req.params["id"]]
+          deviceId = req.params["id"]
+          device = devices[deviceId]
           if device
             @_changeState(device, req.body).then((response) =>
               res.setHeader("Content-Type", "application/json")
@@ -260,7 +233,22 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
             ).done()
           else
             env.logger.warn("device with id #{deviceId} not found")
-            res.status(404).send("Not found")
+            res.status(404).send(JSON.stringify({
+              "error": {
+                "type": 3,
+                "address": req.path,
+                "description": "Light #{deviceId} does not exist."
+              }
+            }))
+      )
+
+      emulator.get('/api/:userid/groups', (req, res) =>
+        res.setHeader("Content-Type", "application/json")
+        res.status(200).send("{}")
+      )
+
+      emulator.get('/api/:userid/groups/0', (req, res) =>
+        throw new Error("group 0 not supported")
       )
 
     _getHueTemplate: =>
@@ -280,9 +268,9 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
     <manufacturerURL>http://www.philips.com</manufacturerURL>
     <modelDescription>Philips hue Personal Wireless Lighting</modelDescription>
     <modelName>Philips hue bridge 2015</modelName>
-    <modelNumber>BSB002</modelNumber>
+    <modelNumber>929000226503</modelNumber>
     <modelURL>http://www.meethue.com</modelURL>
-    <serialNumber>#{bridgeIdMac}</serialNumber>
+    <serialNumber>0017880ae670</serialNumber>
     <UDN>uuid:2f402f80-da50-11e1-9b23-#{bridgeIdMac}</UDN>
     <serviceList>
       <service>
@@ -326,9 +314,9 @@ USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n
         type: "Dimmable light",
         name: device.name,
         modelid: "LWB007",
-        manufacturername: "Philips",
+        manufacturername: "pimatic",
         uniqueid: device.uniqueId,
-        swversion: "66012040"
+        swversion: "66009461"
       }
 
     _toJSON: (json) =>

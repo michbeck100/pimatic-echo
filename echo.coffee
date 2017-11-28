@@ -92,13 +92,13 @@ module.exports = (env) =>
         )
       else
         emulator = express()
-        emulator.listen(@serverPort, () =>
+        emulator.listen(serverPort, () =>
           env.logger.info "started hue emulator on port #{serverPort}"
         ).on('error', () =>
           throw new Error("Error starting hue emulator. Port #{serverPort} is not available.")
         )
 
-      #emulator.use bodyParser.json(type: "application/x-www-form-urlencoded", limit: '1mb')
+      emulator.use bodyParser.json(type: "application/x-www-form-urlencoded", limit: '1mb')
       emulator.use bodyParser.json(limit: '1mb')
 
       if @config.debug
