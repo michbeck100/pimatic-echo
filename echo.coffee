@@ -3,7 +3,7 @@ module.exports = (env) =>
   _ = require('lodash')
   bodyParser = require('body-parser')
   express = require('express')
-  Promise = require('bluebird')
+  Promise = env.require('bluebird')
 
   UpnpServer = require('./lib/upnp')(env)
   HueEmulator = require('./lib/hue')(env)

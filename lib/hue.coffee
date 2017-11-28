@@ -2,7 +2,7 @@ module.exports = (env) =>
   _ = require('lodash')
   fs = require('fs')
   uuid = require('uuid/v4')
-  Promise = require('bluebird')
+  Promise = env.require('bluebird')
 
   Emulator = require('./emulator')(env)
 
