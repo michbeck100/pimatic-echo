@@ -353,6 +353,11 @@ module.exports = (env) =>
         env.logger.debug("added user #{username}")
       return username
 
+    _deleteUser: (username) =>
+      if username in users
+        users.splice(users.indexOf(username), 1)
+        fs.writeFileSync('echoUsers', JSON.stringify(users))
+
     _readUsers: () =>
       if fs.existsSync('echoUsers')
         return fs.readFileSync('echoUsers').toString().split('\n')
