@@ -11,6 +11,10 @@ describe "hue", ->
 
   beforeEach ->
     hue = new Hue()
+    hue.config = {
+      ecoTemp: 16,
+      comfyTemp: 20
+    }
 
   describe "isSupported", ->
 
@@ -67,11 +71,6 @@ describe "hue", ->
       for template in hue.heatingTemplates
         wasCalled = false
         device = {
-          config: {
-            echo: {
-              comfyTemp: 20
-            }
-          }
           template: template
           changeTemperatureTo: (temp) =>
             assert temp is 20
@@ -137,11 +136,6 @@ describe "hue", ->
       for template in hue.heatingTemplates
         wasCalled = false
         device = {
-          config: {
-            echo: {
-              ecoTemp: 16
-            }
-          }
           template: template
           changeTemperatureTo: (temp) =>
             assert temp is 16
@@ -169,11 +163,6 @@ describe "hue", ->
       for template in hue.heatingTemplates
         device = {
           _temperatureSetpoint: 21
-          config: {
-            echo: {
-              ecoTemp: 16
-            }
-          }
           template: template
         }
         assert hue._getState(device) is true
@@ -182,11 +171,6 @@ describe "hue", ->
       for template in hue.heatingTemplates
         device = {
           _temperatureSetpoint: 16
-          config: {
-            echo: {
-              ecoTemp: 16
-            }
-          }
           template: template
         }
         assert hue._getState(device) is false

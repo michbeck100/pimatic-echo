@@ -1,6 +1,5 @@
 module.exports = (env) =>
   _ = require('lodash')
-  bodyParser = require('body-parser')
   fs = require('fs')
   uuid = require('uuid/v4')
   Promise = require('bluebird')
@@ -37,14 +36,20 @@ module.exports = (env) =>
 
     devices = {}
 
-    constructor: (@ipAddress, @serverPort, @macAddress, @upnpPort, @pairingEnabled) ->
+    constructor: (@ipAddress, @serverPort, @macAddress, @upnpPort, @config) ->
       users = @_readUsers()
 
     addDevice: (device) =>
       if Object.keys(devices).length <= 50
         return (deviceName, buttonId) =>
-          uniqueId = (Object.keys(devices).length + 1).toString()
-          devices[uniqueId] = {
+          index = (Object.keys(devices).length + 1).toString()
+          uniqueId = ("0" + (Object.keys(devices).length + 1).toString(16)).slice(-2).toUpperCase()
+          devices[index] = {
+            index: index,
+            state: {
+              on: @_getState(device),
+              brightness: @_getBrightness(device)
+            }
             device: device,
             name: deviceName,
             uniqueId: "00:17:88:5E:D3:" + uniqueId + "-" + uniqueId,
@@ -77,20 +82,19 @@ module.exports = (env) =>
 
       env.logger.debug("changing state for #{device.name}: #{@_toJSON(state)}")
       if state.bri?
-        env.logger.debug("setting brightness of #{device.name} to #{state.bri}")
-        return @_setBrightness(device.device, state.bri).then(() ->
-          Promise.resolve({"success": {"/lights/#{device.uniqueId}/state/bri": state.bri}})
-        )
+        @_setBrightness(device.device, state.bri, device.buttonId).done()
+        device.state.brightness = state.bri
+        return {"success": {"/lights/#{device.index}/state/bri": state.bri}}
       else if state.on?
-        env.logger.debug("setting state of #{device.name} to #{state.on}")
-        return @changeStateTo(device.device, state.on, device.buttonId).then(() ->
-          Promise.resolve({"success": {"/lights/#{device.uniqueId}/state/on": state.on}})
-        )
-      return Promise.resolve()
+        @changeStateTo(device.device, state.on, device.buttonId).done()
+        device.state.on = state.on
+        return {"success": {"/lights/#{device.index}/state/on": state.on}}
+      else
+        throw new Error("unsupported state: #{@_toJSON(state)}")
 
     _turnOn: (device, buttonId) =>
       if @_isHeating(device)
-        return device.changeTemperatureTo(device.config.echo.comfyTemp)
+        return device.changeTemperatureTo(@config.comfyTemp)
       else
         switch device.template
           when "shutter"
@@ -106,7 +110,7 @@ module.exports = (env) =>
 
     _turnOff: (device) =>
       if @_isHeating(device)
-        return device.changeTemperatureTo(device.config.echo.ecoTemp)
+        return device.changeTemperatureTo(@config.ecoTemp)
       else
         return switch device.template
           when "shutter" then device.moveDown()
@@ -116,7 +120,7 @@ module.exports = (env) =>
 
     _getState: (device) =>
       if @_isHeating(device)
-        return device._temperatureSetpoint > device.config.echo.ecoTemp
+        return device._temperatureSetpoint > @config.ecoTemp
       else
         switch device.template
           when "shutter" then device._position == 'up'
@@ -127,7 +131,7 @@ module.exports = (env) =>
 
 
     _getBrightness: (device) =>
-      brightness = 0.0
+      brightness = 0
       if device.hasAttribute("dimlevel")
         brightness = device._dimlevel
       else if device.hasAttribute("brightness")
@@ -137,15 +141,19 @@ module.exports = (env) =>
         brightness = if @_getState(device) then 100.0 else 0.0
       else if @_isHeating(device)
         brightness = device._temperatureSetpoint
-      return brightness / 100 * 255
+      return Math.ceil(brightness / 100 * 254)
 
     _setBrightness: (device, dimLevel, buttonId) =>
+      dimLevel = Math.min(dimLevel, 254)
+      value = Math.ceil(dimLevel / 254 * 100)
       if device.hasAction("changeDimlevelTo")
-        return device.changeDimlevelTo(dimLevel / 255 * 100)
+        return device.changeDimlevelTo(value)
       else if @_isSwitch(device)
-        return @changeStateTo(device, dimLevel > 0, buttonId)
+        return @changeStateTo(device, value > 0, buttonId)
       else if @_isHeating(device)
-        return device.changeTemperatureTo(dimLevel / 255 * 100)
+        return device.changeTemperatureTo(value)
+      else
+        return Promise.resolve()
 
     _getSNUUIDFromMac: =>
       return @macAddress.replace(/:/g, '').toLowerCase()
@@ -233,10 +241,9 @@ module.exports = (env) =>
           deviceId = req.params["id"]
           device = devices[deviceId]
           if device
-            @_changeState(device, req.body).then((response) =>
-              res.setHeader("Content-Type", "application/json")
-              res.status(200).send(@_toJSON([response]))
-            ).done()
+            response = @_changeState(device, req.body)
+            res.setHeader("Content-Type", "application/json")
+            res.status(200).send(@_toJSON([response]))
           else
             env.logger.warn("device with id #{deviceId} not found")
             res.status(404).send(JSON.stringify({
@@ -312,8 +319,8 @@ module.exports = (env) =>
     _getDeviceResponse: (device) =>
       return {
         state: {
-          on: @_getState(device.device),
-          bri: @_getBrightness(device.device),
+          on: device.state.on,
+          bri: device.state.brightness,
           alert: "none",
           reachable: true
         },

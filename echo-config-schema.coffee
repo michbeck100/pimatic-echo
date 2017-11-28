@@ -33,6 +33,5 @@ Otherwise the first non loopback addres will be used.
       description: "Enable debug output"
       type: "boolean"
       default: false
-
   }
 }

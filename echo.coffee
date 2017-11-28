@@ -24,7 +24,7 @@ module.exports = (env) =>
       upnpPort = 1900
 
       upnpServer = new UpnpServer(ipAddress, serverPort, macAddress, upnpPort)
-      hueEmulator = new HueEmulator(ipAddress, serverPort, macAddress, upnpPort, @config.pairingEnabled)
+      hueEmulator = new HueEmulator(ipAddress, serverPort, macAddress, upnpPort, @config)
 
       env.logger.debug "Using ip address : #{ipAddress}"
 
