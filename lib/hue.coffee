@@ -18,7 +18,8 @@ module.exports = (env) =>
       'huezllextendedcolor',
       'led-light',
       'tradfridimmer-dimmer',
-      'tradfridimmer-temp'
+      'tradfridimmer-temp',
+      'tradfridimmer-rgb'
     ]
 
     switchTemplates: [
