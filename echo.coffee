@@ -44,7 +44,7 @@ module.exports = (env) =>
       @framework.once "after init", =>
         upnpServer.start()
 
-        server = @_startServer(serverPort)
+        server = @_startServer(ipAddress, serverPort)
 
         hueEmulator.start(server)
 
@@ -78,7 +78,7 @@ module.exports = (env) =>
       env.logger.warn("No network interface found.")
       return null
 
-    _startServer: (serverPort) =>
+    _startServer: (address, serverPort) =>
       if @framework.app.httpServer? && @framework.config.settings.httpServer?.port == serverPort
         env.logger.debug 'reusing the express instance of pimatic'
         emulator = @framework.app
@@ -102,7 +102,7 @@ module.exports = (env) =>
         )
       else
         emulator = express()
-        emulator.listen(serverPort, () =>
+        emulator.listen(serverPort, address, () =>
           env.logger.info "started hue emulator on port #{serverPort}"
         ).on('error', () =>
           throw new Error("Error starting hue emulator. Port #{serverPort} is not available.")
