@@ -55,6 +55,7 @@ For configuration parameters of pimatic-echo and their documentation please see 
 
 Please note that pimatic-echo will use port 80 by default, as this is needed for the newer echo, 
 so make sure that this port is either free or change it to another free port. 
+If your pimatic instance is using port 80, pimatic-echo will reuse the port.
 
 #### Configuration
 The configuration of pimatic can be extended by adding an attribute called "echo" on every supported device.
@@ -91,6 +92,8 @@ Please make sure that pimatic-echo is placed at the top of the plugins configura
 
 ##### Alexa doesn't find any devices. What's wrong?
 
+* Make sure to enable the pairing mode by using the device discovery feature of pimatic found under Settings -> Devices. Then you've got 20 
+seconds start the device scanning of Alexa.
 * If you are using an Echo or Echo plus, make sure you have configured pimatic-echo to use port 80. Also make that the port isn't used already.
 * Just try to scan again. Sometimes Alexa needs another try to find all devices.
 
