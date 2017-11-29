@@ -102,6 +102,13 @@ Do you like this plugin? Then consider a donation to support development.
 [![Flattr pimatic-hap](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=michbeck100&url=https://github.com/michbeck100/pimatic-echo&title=pimatic-echo&language=&tags=github&category=software)
 
 ### Changelog
+0.5.0
+* Add pairing mode using the built in discovery feature of pimatic.
+* [#38](https://github.com/michbeck100/pimatic-echo/issues/38) add Tradfri RGB
+* fix issues when mixing echoes of different generations
+* reuse port of pimatic if port is equal to piamtic-echo
+* bind express server to single ip 
+
 0.4.0
 * [#28](https://github.com/michbeck100/pimatic-echo/issues/28) support for new Amazon Echo 2 
 * [#29](https://github.com/michbeck100/pimatic-echo/issues/29) support for heating thermostat
