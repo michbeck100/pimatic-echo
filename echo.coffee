@@ -31,7 +31,7 @@ module.exports = (env) =>
       @framework.deviceManager.deviceConfigExtensions.push(new EchoDeviceConfigExtension())
 
       @framework.on 'deviceAdded', (device) =>
-        if @_isActive
+        if @_isActive(device)
           if hueEmulator.isSupported(device)
             addDevice = hueEmulator.addDevice(device)
             if device.template is 'buttons'
@@ -58,7 +58,7 @@ module.exports = (env) =>
         )
 
     _isActive: (device) =>
-      return device.config.echo?.active is true
+      return !!device.config.echo?.active
 
     _getDeviceName: (device) =>
       return if !!device.config.echo?.name then device.config.echo.name else device.name

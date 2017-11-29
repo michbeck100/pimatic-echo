@@ -58,7 +58,7 @@ module.exports = (env) =>
           env.logger.debug("successfully added device #{deviceName} as dimmable light")
       else
         env.logger.warn("Max number of devices exceeded.")
-        return (deviceName, buttonId) => return
+        return () ->
 
 
     isSupported: (device) =>
