@@ -3,6 +3,8 @@ module.exports = (env) =>
   _ = require('lodash')
   bodyParser = require('body-parser')
   express = require('express')
+  fs = require('fs')
+  path = require('path')
   Promise = env.require('bluebird')
 
   UpnpServer = require('./lib/upnp')(env)
@@ -23,8 +25,12 @@ module.exports = (env) =>
       serverPort = @config.port
       upnpPort = 1900
 
+      storageDir = path.resolve(@framework.maindir, '../../echo-database')
+      if !fs.existsSync(storageDir)
+        fs.mkdirSync(storageDir)
+
       upnpServer = new UpnpServer(ipAddress, serverPort, macAddress, upnpPort)
-      hueEmulator = new HueEmulator(ipAddress, serverPort, macAddress, upnpPort, @config)
+      hueEmulator = new HueEmulator(ipAddress, serverPort, macAddress, upnpPort, @config, storageDir)
 
       env.logger.debug "Using ip address : #{ipAddress}"
 

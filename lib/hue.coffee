@@ -2,6 +2,8 @@ module.exports = (env) =>
   _ = require('lodash')
   fs = require('fs')
   uuid = require('uuid/v4')
+  path = require('path')
+
   Promise = env.require('bluebird')
 
   Emulator = require('./emulator')(env)
@@ -37,7 +39,7 @@ module.exports = (env) =>
 
     devices = {}
 
-    constructor: (@ipAddress, @serverPort, @macAddress, @upnpPort, @config) ->
+    constructor: (@ipAddress, @serverPort, @macAddress, @upnpPort, @config, @storagePath) ->
       users = @_readUsers()
 
     addDevice: (device) =>
@@ -357,16 +359,16 @@ module.exports = (env) =>
         username = uuid().replace(/-/g, '')
       if username not in users
         users.push(username)
-        fs.appendFileSync('echoUsers', username + '\n')
+        fs.appendFileSync(path.resolve(@storagePath, 'echoUsers'), username + '\n')
         env.logger.debug("added user #{username}")
       return username
 
     _deleteUser: (username) =>
       if username in users
         users.splice(users.indexOf(username), 1)
-        fs.writeFileSync('echoUsers', JSON.stringify(users))
+        fs.writeFileSync(path.resolve(@storagePath, 'echoUsers'), JSON.stringify(users))
 
     _readUsers: () =>
       if fs.existsSync('echoUsers')
-        return fs.readFileSync('echoUsers').toString().split('\n')
+        return fs.readFileSync(path.resolve(@storagePath, 'echoUsers')).toString().split('\n')
       return []
