@@ -376,6 +376,6 @@ module.exports = (env) =>
         fs.writeFileSync(path.resolve(@storagePath, 'echoUsers'), JSON.stringify(users))
 
     _readUsers: () =>
-      if fs.existsSync('echoUsers')
+      if fs.existsSync(path.resolve(@storagePath, 'echoUsers'))
         return fs.readFileSync(path.resolve(@storagePath, 'echoUsers')).toString().split('\n')
       return []
