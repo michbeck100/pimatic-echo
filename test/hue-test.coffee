@@ -10,7 +10,7 @@ describe "hue", ->
   hue = null
 
   beforeEach ->
-    hue = new Hue()
+    hue = new Hue('127.0.0.1', '8080', 'AA:BB:CC:DD:EE:FF', 1900, {}, '.')
     hue.config = {
       ecoTemp: 16,
       comfyTemp: 20
