@@ -23,14 +23,16 @@ module.exports = (env) =>
       'led-light',
       'tradfridimmer-dimmer',
       'tradfridimmer-temp',
-      'tradfridimmer-rgb'
+      'tradfridimmer-rgb',
+      'milight-rgbw'
     ]
 
     switchTemplates: [
       'buttons',
       'huezllonoff',
-      'shutter'
-      'switch'
+      'shutter',
+      'switch',
+      'milight-cwww'
     ]
 
     heatingTemplates: [
