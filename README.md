@@ -17,7 +17,8 @@ These device classes are supported currently:
 * DummyHeatingThermostat
 * ButtonsDevice (just the first defined button)
 * All devices extending from ShutterController (Shutters will go up when switched on and vice versa)
-* All lights from [pimatic-led-light](https://github.com/philip1986/pimatic-led-light), [pimatic-hue-zll](https://github.com/markbergsma/pimatic-hue-zll) and [pimatic-tradfri](https://github.com/treban/pimatic-tradfri/)
+* All lights from [pimatic-led-light](https://github.com/philip1986/pimatic-led-light), [pimatic-hue-zll](https://github
+.com/markbergsma/pimatic-hue-zll), [pimatic-milight-reloaded](https://github.com/mwittig/pimatic-milight-reloaded) and [pimatic-tradfri](https://github.com/treban/pimatic-tradfri/)
 * All thermostats from [pimatic-maxcul](https://github.com/fbeek/pimatic-maxcul) and [pimatic-mythermostat](https://github.com/360manu/pimatic-mythermostat)
 
 If you are the developer of a pimatic plugin that defines a device class, that implements switch functionality, just create a [feature request](https://github.com/michbeck100/pimatic-echo/issues/new).
