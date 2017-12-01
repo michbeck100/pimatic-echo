@@ -102,8 +102,7 @@ seconds start the device scanning of Alexa.
 
 Do you like this plugin? Then consider a donation to support development.
 
-<span class="badge-paypal"><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=2T48JXA589B4Y" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
-[![Flattr pimatic-hap](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=michbeck100&url=https://github.com/michbeck100/pimatic-echo&title=pimatic-echo&language=&tags=github&category=software)
+<span class="badge-paypal"><a href="paypal.me/michaelkotten" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
 
 ### Changelog
 0.5.0
