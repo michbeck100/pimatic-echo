@@ -46,6 +46,8 @@ module.exports = (env) =>
               addDevice(@_getDeviceName(device))
               for additionalName in @_getAdditionalNames(device)
                 addDevice(additionalName)
+          else
+            env.logger.warn("device #{device.name} not added, because #{device.template} is currently not supported. ")
 
       @framework.once "after init", =>
         upnpServer.start()
