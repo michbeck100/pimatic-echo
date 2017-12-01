@@ -102,7 +102,7 @@ seconds start the device scanning of Alexa.
 
 Do you like this plugin? Then consider a donation to support development.
 
-<span class="badge-paypal"><a href="paypal.me/michaelkotten" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
+<span class="badge-paypal"><a href="https://www.paypal.me/michaelkotten" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
 
 ### Changelog
 0.5.0
