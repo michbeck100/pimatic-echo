@@ -10,6 +10,8 @@ module.exports = (env) =>
 
   class Hue extends Emulator
 
+    pairingEnabled: false
+
     users = []
 
     dimmerTemplates: [
@@ -339,6 +341,9 @@ module.exports = (env) =>
       return JSON.stringify(json, null, 2)
 
     _authorizeUser: (username, req, res) =>
+      if username == "echo"
+        # convenience user to help analyze problems
+        return true
       if @pairingEnabled
         @_addUser(username)
       if username in users

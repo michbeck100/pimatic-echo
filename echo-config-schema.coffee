@@ -2,10 +2,6 @@ module.exports = {
   title: "pimatic-echo config",
   type: "object",
   properties: {
-    pairingEnabled:
-      description: "Turn on pairing of devices"
-      type: "boolean"
-      default: false
     address:
       description: """
 The ip address of the network interface to use (for systems with multiple addresses).
@@ -18,7 +14,7 @@ Otherwise the first non loopback addres will be used.
       type: "string"
       required: false
     port:
-      description: "The port of the hue emulation server"
+      description: "The port of the hue emulation server. For the newer echo generations this MUST be on port 80!"
       type: "integer"
       default: 80
     comfyTemp:
