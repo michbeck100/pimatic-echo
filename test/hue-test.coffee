@@ -205,6 +205,12 @@ describe "hue", ->
       device._position = 'down'
       assert hue._getState(device) is false
 
+    it "should return false if state is null", ->
+      device = {
+        template: "switch"
+        _state: null
+      }
+      assert hue._getState(device) is false
 
 
 

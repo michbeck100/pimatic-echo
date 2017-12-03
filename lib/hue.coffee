@@ -134,7 +134,7 @@ module.exports = (env) =>
           when "buttons" then false
           when "led-light" then device.power == 'on' || device.power == true
           else
-            device._state
+            if device._state != null then device._state else false
 
 
     _getBrightness: (device) =>
