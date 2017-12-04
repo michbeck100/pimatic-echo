@@ -189,13 +189,14 @@ module.exports = (env) =>
 
       emulator.post('/api', (req, res) =>
         res.setHeader("Content-Type", "application/json")
+        res.status(200)
         if @pairingEnabled
           username = @_addUser(req.body.username)
-          res.status(200).send(@_toJSON([{"success": {"username": username}}]))
+          res.send(@_toJSON([{"success": {"username": username}}]))
         else
-          res.status(401).send(JSON.stringify({
+          res.send(JSON.stringify({
             "error": {
-              "type": 1,
+              "type": 101,
               "address": req.path,
               "description": "Not Authorized. Pair button must be pressed to add users."
             }
@@ -228,13 +229,14 @@ module.exports = (env) =>
         if @_authorizeUser(req.params["userid"], req, res)
           deviceId = req.params["id"]
           device = devices[deviceId]
+          res.setHeader("Content-Type", "application/json")
+          res.status(200)
           if device
-            res.setHeader("Content-Type", "application/json")
             deviceResponse = @_toJSON(@_getDeviceResponse(device))
-            res.status(200).send(deviceResponse)
+            res.send(deviceResponse)
           else
             env.logger.warn("device with id #{deviceId} not found")
-            res.status(404).send(JSON.stringify({
+            res.send(JSON.stringify({
               "error": {
                 "type": 3,
                 "address": req.path,
@@ -247,13 +249,14 @@ module.exports = (env) =>
         if @_authorizeUser(req.params["userid"], req, res)
           deviceId = req.params["id"]
           device = devices[deviceId]
+          res.setHeader("Content-Type", "application/json")
+          res.status(200)
           if device
             response = @_changeState(device, req.body)
-            res.setHeader("Content-Type", "application/json")
-            res.status(200).send(@_toJSON([response]))
+            res.send(@_toJSON([response]))
           else
             env.logger.warn("device with id #{deviceId} not found")
-            res.status(404).send(JSON.stringify({
+            res.send(JSON.stringify({
               "error": {
                 "type": 3,
                 "address": req.path,
@@ -267,8 +270,16 @@ module.exports = (env) =>
         res.status(200).send("{}")
       )
 
-      emulator.get('/api/:userid/groups/0', (req, res) =>
-        throw new Error("group 0 not supported")
+      emulator.get('/api/:userid/groups/:id', (req, res) =>
+        deviceId = req.params["id"]
+        res.setHeader("Content-Type", "application/json")
+        res.status(200).send(JSON.stringify({
+          "error": {
+            "type": 3,
+            "address": req.path,
+            "description": "/groups/#{deviceId} not available."
+          }
+        }))
       )
 
     _getHueTemplate: =>
