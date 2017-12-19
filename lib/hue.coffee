@@ -47,7 +47,7 @@ module.exports = (env) =>
       users = @_readUsers()
 
     addDevice: (device) =>
-      if Object.keys(devices).length <= 50
+      if Object.keys(devices).length < 50
         return (deviceName, buttonId) =>
           index = (Object.keys(devices).length + 1).toString()
           uniqueId = ("0" + (Object.keys(devices).length + 1).toString(16)).slice(-2).toUpperCase()
