@@ -104,6 +104,18 @@ Do you like this plugin? Then consider a donation to support development.
 <span class="badge-paypal"><a href="https://www.paypal.me/michaelkotten" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
 
 ### Changelog
+0.5.3
+* [#46](https://github.com/michbeck100/pimatic-echo/issues/46) return error response for groups request
+* [#45](https://github.com/michbeck100/pimatic-echo/issues/45) return false if state is null
+* maximum number of devices reduced to 49, 50 seems to be too high
+
+0.5.2
+* [#44](https://github.com/michbeck100/pimatic-echo/issues/44) Fix error with path
+* [#43](https://github.com/michbeck100/pimatic-echo/issues/43) Add support for milight-reloaded 
+
+0.5.1
+* minor improvements
+
 0.5.0
 * Add pairing mode using the built in discovery feature of pimatic.
 * [#38](https://github.com/michbeck100/pimatic-echo/issues/38) add Tradfri RGB
