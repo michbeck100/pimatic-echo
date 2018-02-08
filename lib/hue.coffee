@@ -44,6 +44,7 @@ module.exports = (env) =>
     devices = {}
 
     constructor: (@ipAddress, @serverPort, @macAddress, @upnpPort, @config, @storagePath) ->
+      super()
       users = @_readUsers()
 
     addDevice: (device) =>
