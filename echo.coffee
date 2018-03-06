@@ -87,34 +87,12 @@ module.exports = (env) =>
       return null
 
     _startServer: (address, serverPort) =>
-      if @framework.app.httpServer? && @framework.config.settings.httpServer?.port == serverPort
-        env.logger.debug 'reusing the express instance of pimatic'
-        emulator = @framework.app
-        @framework.userManager.addAllowPublicAccessCallback((req) =>
-          allowedPaths = switch req.method
-            when 'GET' then [
-              /\/description\.xml/,
-              /\/favicon\.ico/,
-              /\/hue_logo_0\.png/,
-              /\/hue_logo_3\.png/,
-              /\/api\/.+\/lights/,
-              /\/api\/.+\/lights\/\d+/
-            ]
-            when 'POST' then [/\/api/]
-            when 'PUT' then [/\/api\/.+\/lights\/\d+\/state/]
-            else []
-          allowed = _.some(allowedPaths, (regex) ->
-            return regex.test(req.path)
-          )
-          return allowed
-        )
-      else
-        emulator = express()
-        emulator.listen(serverPort, address, () =>
-          env.logger.info "started hue emulator on port #{serverPort}"
-        ).on('error', () =>
-          throw new Error("Error starting hue emulator. Port #{serverPort} is not available.")
-        )
+      emulator = express()
+      emulator.listen(serverPort, address, () =>
+        env.logger.info "started hue emulator on port #{serverPort}"
+      ).on('error', () =>
+        throw new Error("Error starting hue emulator. Maybe port #{serverPort} is not available?")
+      )
 
       emulator.use bodyParser.json(type: "application/x-www-form-urlencoded", limit: '1mb')
       emulator.use bodyParser.json(limit: '1mb')
