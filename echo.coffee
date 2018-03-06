@@ -97,7 +97,6 @@ module.exports = (env) =>
               /\/favicon\.ico/,
               /\/hue_logo_0\.png/,
               /\/hue_logo_3\.png/,
-              /\/api\/.+/,
               /\/api\/.+\/lights/,
               /\/api\/.+\/lights\/\d+/
             ]
