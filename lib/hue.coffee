@@ -38,7 +38,8 @@ module.exports = (env) =>
     heatingTemplates: [
       'maxcul-heating-thermostat',
       'thermostat',
-      'mythermostat'
+      'mythermostat',
+      'openhr20-thermostat'
     ]
 
     devices = {}
