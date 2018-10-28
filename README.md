@@ -96,6 +96,7 @@ Please make sure that pimatic-echo is placed at the top of the plugins configura
 * Make sure to enable the pairing mode by using the device discovery feature of pimatic found under Settings -> Devices. Then you've got 20 
 seconds start the device scanning of Alexa.
 * By default pimatic-echo uses port 80. So make that the port isn't used already by another process. Running pimatic on port 80 is fine, as pimatic-echo will reuse the port. You can also change the port in the plugin config.
+* If you edit device properties via the web frontend, make sure to restart pimatic afterwards.
 * Just try to scan again. Sometimes Alexa needs another try to find all devices.
 
 ### Sponsoring
