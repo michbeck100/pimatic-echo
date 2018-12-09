@@ -92,7 +92,7 @@ Please make sure that pimatic-echo is placed at the top of the plugins configura
 
 ##### Alexa doesn't find any devices. What's wrong?
 
-* IMPORTANT: Currently the newer echo devices (echo plus and echo 2nd gen) are not supported with pimatic-echo. Just the echo dot or echo (1st gen) are supported. If you are using both generations, you can search for devices with the old echo, but still control everything from all echoes.
+* IMPORTANT: Currently the newer echo devices (echo plus and echo 2nd gen) are not supported with pimatic-echo. Just the echo dot (2nd gen) or echo (1st gen) are supported. If you are using both generations, you can search for devices with the old echo, but still control everything from all echoes.
 * Make sure to enable the pairing mode by using the device discovery feature of pimatic found under Settings -> Devices. Then you've got 20 
 seconds start the device scanning of Alexa.
 * By default pimatic-echo uses port 80. So make that the port isn't used already by another process. Running pimatic on port 80 is fine, as pimatic-echo will reuse the port. You can also change the port in the plugin config.
