@@ -14,9 +14,9 @@ Otherwise the first non loopback addres will be used.
       type: "string"
       required: false
     port:
-      description: "The port of the hue emulation server."
+      description: "The port of the hue emulation server. For the newer echo generations this MUST be on port 80!"
       type: "integer"
-      default: 9876
+      default: 80
     comfyTemp:
       description: "The comfort mode temperature"
       type: "integer"
