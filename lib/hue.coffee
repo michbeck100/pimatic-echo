@@ -301,19 +301,10 @@ module.exports = (env) =>
     <manufacturerURL>http://www.philips.com</manufacturerURL>
     <modelDescription>Philips hue Personal Wireless Lighting</modelDescription>
     <modelName>Philips hue bridge 2015</modelName>
-    <modelNumber>929000226503</modelNumber>
+    <modelNumber>BSB002</modelNumber>
     <modelURL>http://www.meethue.com</modelURL>
-    <serialNumber>0017880ae670</serialNumber>
+    <serialNumber>#{bridgeIdMac}</serialNumber>
     <UDN>uuid:2f402f80-da50-11e1-9b23-#{bridgeIdMac}</UDN>
-    <serviceList>
-      <service>
-        <serviceType>(null)</serviceType>
-        <serviceId>(null)</serviceId>
-        <controlURL>(null)</controlURL>
-        <eventSubURL>(null)</eventSubURL>
-        <SCPDURL>(null)</SCPDURL>
-      </service>
-    </serviceList>
     <presentationURL>index.html</presentationURL>
     <iconList>
       <icon>
