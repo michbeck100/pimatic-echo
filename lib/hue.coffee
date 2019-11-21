@@ -24,7 +24,10 @@ module.exports = (env) =>
       'tradfridimmer-dimmer',
       'tradfridimmer-temp',
       'tradfridimmer-rgb',
-      'milight-rgbw'
+      'milight-rgbw',
+      'raspbee-dimmer',
+      'raspbee-ct',
+      'raspbee-rgbct'
     ]
 
     switchTemplates: [
