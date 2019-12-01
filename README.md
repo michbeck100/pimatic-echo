@@ -106,6 +106,9 @@ Do you like this plugin? Then consider a donation to support development.
 <span class="badge-paypal"><a href="https://www.paypal.me/michaelkotten" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
 
 ### Changelog
+0.5.5
+* [#72](https://github.com/michbeck100/pimatic-echo/issues/72) Encode returned json from hue emulator with iconv-lite using UTF-8 encoding.
+
 0.5.4
 * [#67](https://github.com/michbeck100/pimatic-echo/issues/67) Default port for hue emulator is 80 again, also some changes to the upnp device discovery
 
