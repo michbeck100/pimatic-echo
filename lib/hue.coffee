@@ -3,6 +3,7 @@ module.exports = (env) =>
   fs = require('fs')
   uuid = require('uuid/v4')
   path = require('path')
+  iconv = require('iconv-lite')
 
   Promise = env.require('bluebird')
 
@@ -344,7 +345,7 @@ module.exports = (env) =>
       }
 
     _toJSON: (json) =>
-      return JSON.stringify(json, null, 2)
+      return iconv.encode(JSON.stringify(json, null, 2), 'UTF-8')
 
     _authorizeUser: (username, req, res) =>
       if username == "echo"
