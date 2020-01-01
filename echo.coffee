@@ -58,11 +58,11 @@ module.exports = (env) =>
 
       @framework.deviceManager.on "discover", (eventData) =>
         @framework.deviceManager.discoverMessage("pimatic-echo",
-          "Pairing mode is enabled for 20 seconds. Let Alexa scan for devices now.")
+          "Pairing mode is enabled. Let Alexa scan for devices now.")
         hueEmulator.pairingEnabled = true
-        Promise.delay(20000).then(() => hueEmulator.pairingEnabled = false ).then(
+        Promise.delay(eventData.time).then(() => hueEmulator.pairingEnabled = false ).then(
           () => @framework.deviceManager.discoverMessage("pimatic-echo",
-            "Pairing mode is disabled again.")
+            "Pairing mode is disabled again. If no devices were found, please try again.")
         )
 
     _isActive: (device) =>

@@ -1,5 +1,4 @@
 module.exports = (env) =>
-  _ = require('lodash')
   fs = require('fs')
   uuid = require('uuid/v4')
   path = require('path')
@@ -84,7 +83,6 @@ module.exports = (env) =>
       return device.template in @heatingTemplates
 
     _changeState: (device, state) =>
-
       try
         # some echoes send strange json
         state = JSON.parse(Object.keys(state)[0])
@@ -191,98 +189,83 @@ module.exports = (env) =>
       )
 
       emulator.post('/api', (req, res) =>
-        res.setHeader("Content-Type", "application/json")
-        res.status(200)
         if @pairingEnabled
           username = @_addUser(req.body.username)
-          res.send(@_toJSON([{"success": {"username": username}}]))
+          @_sendResponse(res, [{"success": {"username": username}}])
         else
-          res.send(JSON.stringify({
+          @_sendResponse(res, {
             "error": {
               "type": 101,
               "address": req.path,
               "description": "Not Authorized. Pair button must be pressed to add users."
             }
-          }))
+          })
       )
 
       emulator.get('/api/:userid', (req, res) =>
         if @_authorizeUser(req.params["userid"], req, res)
-          res.setHeader("Content-Type", "application/json")
           lights = {}
-          _.forOwn(devices, (device, id) =>
+          for id, device of devices
             lights[id] = @_getDeviceResponse(device)
-          )
-          res.status(200).send(@_toJSON({
-            lights
-          }))
+          @_sendResponse(res, {lights})
       )
 
       emulator.get('/api/:userid/lights', (req, res) =>
         if @_authorizeUser(req.params["userid"], req, res)
-          response = {}
-          _.forOwn(devices, (device, id) =>
-            response[id] = @_getDeviceResponse(device)
-          )
-          res.setHeader("Content-Type", "application/json")
-          res.status(200).send(@_toJSON(response))
+          payload = {}
+          for id, device of devices
+            payload[id] = @_getDeviceResponse(device)
+          @_sendResponse(res, payload)
       )
 
       emulator.get('/api/:userid/lights/:id', (req, res) =>
         if @_authorizeUser(req.params["userid"], req, res)
           deviceId = req.params["id"]
           device = devices[deviceId]
-          res.setHeader("Content-Type", "application/json")
-          res.status(200)
           if device
-            deviceResponse = @_toJSON(@_getDeviceResponse(device))
-            res.send(deviceResponse)
+            @_sendResponse(res, @_getDeviceResponse(device))
           else
             env.logger.warn("device with id #{deviceId} not found")
-            res.send(JSON.stringify({
+            @_sendResponse(res, {
               "error": {
                 "type": 3,
                 "address": req.path,
                 "description": "Light #{deviceId} does not exist."
               }
-            }))
+            })
       )
 
       emulator.put('/api/:userid/lights/:id/state', (req, res) =>
         if @_authorizeUser(req.params["userid"], req, res)
           deviceId = req.params["id"]
           device = devices[deviceId]
-          res.setHeader("Content-Type", "application/json")
-          res.status(200)
           if device
-            response = @_changeState(device, req.body)
-            res.send(@_toJSON([response]))
+            payload = @_changeState(device, req.body)
+            @_sendResponse(res, [payload])
           else
             env.logger.warn("device with id #{deviceId} not found")
-            res.send(JSON.stringify({
+            @_sendResponse(res, {
               "error": {
                 "type": 3,
                 "address": req.path,
                 "description": "Light #{deviceId} does not exist."
               }
-            }))
+            })
       )
 
       emulator.get('/api/:userid/groups', (req, res) =>
-        res.setHeader("Content-Type", "application/json")
-        res.status(200).send("{}")
+        @_sendResponse(res, {})
       )
 
       emulator.get('/api/:userid/groups/:id', (req, res) =>
         deviceId = req.params["id"]
-        res.setHeader("Content-Type", "application/json")
-        res.status(200).send(JSON.stringify({
+        @_sendResponse(res, {
           "error": {
             "type": 3,
             "address": req.path,
             "description": "/groups/#{deviceId} not available."
           }
-        }))
+        })
       )
 
     _getHueTemplate: =>
@@ -347,6 +330,13 @@ module.exports = (env) =>
     _toJSON: (json) =>
       return iconv.encode(JSON.stringify(json, null, 2), 'UTF-8')
 
+    _sendResponse: (res, payload) =>
+      res.setHeader("Content-Type", "application/json; charset=utf-8")
+      res.status(200)
+      json = @_toJSON(payload)
+      res.send(json)
+      #env.logger.debug("sent response #{json}")
+
     _authorizeUser: (username, req, res) =>
       if username == "echo"
         # convenience user to help analyze problems
@@ -374,11 +364,6 @@ module.exports = (env) =>
         fs.appendFileSync(path.resolve(@storagePath, 'echoUsers'), username + '\n')
         env.logger.debug("added user #{username}")
       return username
-
-    _deleteUser: (username) =>
-      if username in users
-        users.splice(users.indexOf(username), 1)
-        fs.writeFileSync(path.resolve(@storagePath, 'echoUsers'), JSON.stringify(users))
 
     _readUsers: () =>
       if fs.existsSync(path.resolve(@storagePath, 'echoUsers'))
