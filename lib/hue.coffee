@@ -51,10 +51,9 @@ module.exports = (env) =>
     addDevice: (device) =>
       if Object.keys(devices).length < 50
         return (deviceName, buttonId) =>
-          index = (Object.keys(devices).length + 1).toString()
           uniqueId = ("0" + (Object.keys(devices).length + 1).toString(16)).slice(-2).toUpperCase()
-          devices[index] = {
-            index: index,
+          devices[device.id] = {
+            id: device.id,
             state: {
               on: @_getState(device),
               brightness: @_getBrightness(device)
@@ -92,11 +91,11 @@ module.exports = (env) =>
       if state.bri?
         @_setBrightness(device.device, state.bri, device.buttonId).done()
         device.state.brightness = state.bri
-        return {"success": {"/lights/#{device.index}/state/bri": state.bri}}
+        return {"success": {"/lights/#{device.id}/state/bri": state.bri}}
       else if state.on?
         @changeStateTo(device.device, state.on, device.buttonId).done()
         device.state.on = state.on
-        return {"success": {"/lights/#{device.index}/state/on": state.on}}
+        return {"success": {"/lights/#{device.id}/state/on": state.on}}
       else
         throw new Error("unsupported state: #{@_toJSON(state)}")
 
