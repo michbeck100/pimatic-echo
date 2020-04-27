@@ -105,6 +105,10 @@ Do you like this plugin? Then consider a donation to support development.
 <span class="badge-paypal"><a href="https://www.paypal.me/michaelkotten" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
 
 ### Changelog
+0.5.7
+* [#71](https://github.com/michbeck100/pimatic-echo/pull/71) Add pimatic-raspbee support for dim-lights
+* create hash from device id so every device keeps its index. Strings as index are not supported. This fixes the issue, that alexa mixes up devices if a device is deleted or moved in pimatic
+
 0.5.6
 * move from int for index to string using device id, seems to work, too. This fixes the issue, that alexa mixes up devices if a device is deleted or moved in pimatic
 

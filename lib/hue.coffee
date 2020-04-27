@@ -55,8 +55,9 @@ module.exports = (env) =>
       if Object.keys(devices).length < 50
         return (deviceName, buttonId) =>
           uniqueId = ("0" + (Object.keys(devices).length + 1).toString(16)).slice(-2).toUpperCase()
-          devices[device.id] = {
-            id: device.id,
+          deviceId = @_hash(device.id)
+          devices[deviceId] = {
+            id: deviceId,
             state: {
               on: @_getState(device),
               brightness: @_getBrightness(device)
@@ -195,6 +196,7 @@ module.exports = (env) =>
           username = @_addUser(req.body.username)
           @_sendResponse(res, [{"success": {"username": username}}])
         else
+          env.logger.debug("Pairing is disabled. Return error response.")
           @_sendResponse(res, {
             "error": {
               "type": 101,
@@ -371,3 +373,11 @@ module.exports = (env) =>
       if fs.existsSync(path.resolve(@storagePath, 'echoUsers'))
         return fs.readFileSync(path.resolve(@storagePath, 'echoUsers')).toString().split('\n')
       return []
+
+    _hash: (str) =>
+      hash = 5381
+      i    = str.length
+      while(i)
+        hash = (hash * 33) ^ str.charCodeAt(--i)
+      return hash >>> 0;
+
