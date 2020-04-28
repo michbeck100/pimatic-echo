@@ -55,7 +55,7 @@ module.exports = (env) =>
       if Object.keys(devices).length < 50
         return (deviceName, buttonId) =>
           uniqueId = ("0" + (Object.keys(devices).length + 1).toString(16)).slice(-2).toUpperCase()
-          deviceId = @_hash(device.id)
+          deviceId = @_hash(deviceName)
           devices[deviceId] = {
             id: deviceId,
             state: {
