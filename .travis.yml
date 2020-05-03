@@ -9,6 +9,8 @@ matrix:
       env: CXX=g++-4.8
     - node_js: "10"
       env: CXX=g++-4.8
+    - node_js: "12"
+      env: CXX=g++-4.8
 addons:
   apt:
     sources:
