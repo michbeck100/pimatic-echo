@@ -1,7 +1,7 @@
 module.exports = (env) =>
 
   _ = require('lodash')
-  async = require('async')
+  semver = require('semver')
 
   udpServer = require('dgram').createSocket({ type: 'udp4', reuseAddr: true })
 
@@ -51,7 +51,7 @@ module.exports = (env) =>
         "hue-bridgeid: #{bridgeId}\r\n" +
         "ST: upnp:rootdevice\r\n" +
         "USN: uuid:#{uuidPrefix}#{bridgeSNUUID}::upnp:rootdevice\r\n\r\n"
-      responses.push(Buffer.from(template))
+      responses.push(@_buffer(template))
 
       template = "HTTP/1.1 200 OK\r\n" +
         "HOST: 239.255.255.250:#{@upnpPort}\r\n" +
@@ -62,7 +62,7 @@ module.exports = (env) =>
         "hue-bridgeid: #{bridgeId}\r\n" +
         "ST: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n" +
         "USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n"
-      responses.push(Buffer.from(template))
+      responses.push(@_buffer(template))
 
       template = "HTTP/1.1 200 OK\r\n" +
         "HOST: 239.255.255.250:#{@upnpPort}\r\n" +
@@ -73,10 +73,14 @@ module.exports = (env) =>
         "hue-bridgeid: #{bridgeId}\r\n" +
         "ST: urn:schemas-upnp-org:device:basic:1\r\n" +
         "USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n"
-      responses.push(Buffer.from(template))
+      responses.push(@_buffer(template))
 
       return responses
 
+    _buffer: (template) =>
+      if semver.lt(process.version, '6.0.0')
+        return new Buffer(template)
+      return Buffer.from(template)
 
     _getSNUUIDFromMac: =>
       return @macAddress.replace(/:/g, '').toLowerCase()
