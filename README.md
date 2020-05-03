@@ -106,6 +106,10 @@ Do you like this plugin? Then consider a donation to support development.
 
 ### Changelog
 0.5.8
+* [#77](https://github.com/michbeck100/pimatic-echo/issues/77) add compatibility with node 4 again
+* add peerDependencies on package.josn again. Hope this fixes the problem that pimatic doesN#t find the update  
+
+0.5.8
 * [#76](https://github.com/michbeck100/pimatic-echo/issues/76) create hash from device name, because device id is the same if using aditionalNames config or button device
 
 0.5.7
