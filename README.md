@@ -1,8 +1,7 @@
-[![Build Status](http://img.shields.io/travis/michbeck100/pimatic-echo/master.svg)](https://travis-ci.org/michbeck100/pimatic-echo)
-[![Version](https://img.shields.io/npm/v/pimatic-echo.svg)](https://img.shields.io/npm/v/pimatic-echo.svg)
-[![downloads][downloads-image]][downloads-url]
+![Build Status](https://github.com/michbeck100/pimatic-echo/workflows/pimatic-echo/badge.svg)
+[![Version](https://img.shields.io/npm/v/pimatic-echo.svg)][downloads-url]
+[![downloads](https://img.shields.io/npm/dm/pimatic-echo.svg?style=flat)][downloads-url]
 
-[downloads-image]: https://img.shields.io/npm/dm/pimatic-echo.svg?style=flat
 [downloads-url]: https://npmjs.org/package/pimatic-echo
 
 
