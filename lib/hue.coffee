@@ -10,10 +10,6 @@ module.exports = (env) =>
 
   class Hue extends Emulator
 
-    pairingEnabled: false
-
-    users = []
-
     dimmerTemplates: [
       'dimmer',
       'huezlldimmable',
@@ -49,7 +45,6 @@ module.exports = (env) =>
 
     constructor: (@ipAddress, @serverPort, @macAddress, @upnpPort, @config, @storagePath) ->
       super()
-      users = @_readUsers()
 
     addDevice: (device) =>
       if Object.keys(devices).length < 50
@@ -177,202 +172,131 @@ module.exports = (env) =>
 
     start: (emulator) =>
       emulator.get('/description.xml', (req, res) =>
-        res.setHeader("Content-Type", "application/xml; charset=utf-8")
+        res.setHeader("Content-Type", "text/xml")
         res.status(200).send(@_getHueTemplate())
       )
 
-      emulator.get('/favicon.ico', (req, res) =>
-        res.status(200).send('')
-      )
-      emulator.get('/hue_logo_0.png', (req, res) =>
-        res.status(200).send('')
-      )
-      emulator.get('/hue_logo_3.png', (req, res) =>
-        res.status(200).send('')
+      emulator.get('/api/:userid/lights', (req, res) =>
+        payload = {}
+        for id, device of devices
+          payload[id] = @_getDeviceResponse(device, true)
+        @_sendResponse(res, payload)
       )
 
-      emulator.post('/api', (req, res) =>
-        if @pairingEnabled
-          username = @_addUser(req.body.username)
-          @_sendResponse(res, [{"success": {"username": username}}])
+      emulator.get('/api/:userid/lights/:id', (req, res) =>
+        deviceId = req.params["id"]
+        device = devices[deviceId]
+        if device
+          @_sendResponse(res, @_getDeviceResponse(device))
         else
-          env.logger.debug("Pairing is disabled. Return error response.")
+          env.logger.warn("device with id #{deviceId} not found")
           @_sendResponse(res, {
             "error": {
-              "type": 101,
+              "type": 3,
               "address": req.path,
-              "description": "Not Authorized. Pair button must be pressed to add users."
+              "description": "Light #{deviceId} does not exist."
             }
           })
       )
 
-      emulator.get('/api/:userid', (req, res) =>
-        if @_authorizeUser(req.params["userid"], req, res)
-          lights = {}
-          for id, device of devices
-            lights[id] = @_getDeviceResponse(device)
-          @_sendResponse(res, {lights})
-      )
-
-      emulator.get('/api/:userid/lights', (req, res) =>
-        if @_authorizeUser(req.params["userid"], req, res)
-          payload = {}
-          for id, device of devices
-            payload[id] = @_getDeviceResponse(device)
-          @_sendResponse(res, payload)
-      )
-
-      emulator.get('/api/:userid/lights/:id', (req, res) =>
-        if @_authorizeUser(req.params["userid"], req, res)
-          deviceId = req.params["id"]
-          device = devices[deviceId]
-          if device
-            @_sendResponse(res, @_getDeviceResponse(device))
-          else
-            env.logger.warn("device with id #{deviceId} not found")
-            @_sendResponse(res, {
-              "error": {
-                "type": 3,
-                "address": req.path,
-                "description": "Light #{deviceId} does not exist."
-              }
-            })
+      emulator.post('/api', (req, res) =>
+        env.logger.debug("Handling devicetype request")
+        @_sendResponse(res, [{
+          success: {
+            username: "2WLEDHardQrI3WHYTHoMcXHgEspsM8ZZRpSKtBQr"
+          }
+        }])
       )
 
       emulator.put('/api/:userid/lights/:id/state', (req, res) =>
-        if @_authorizeUser(req.params["userid"], req, res)
-          deviceId = req.params["id"]
-          device = devices[deviceId]
-          if device
-            payload = @_changeState(device, req.body)
-            @_sendResponse(res, [payload])
-          else
-            env.logger.warn("device with id #{deviceId} not found")
-            @_sendResponse(res, {
-              "error": {
-                "type": 3,
-                "address": req.path,
-                "description": "Light #{deviceId} does not exist."
-              }
-            })
-      )
-
-      emulator.get('/api/:userid/groups', (req, res) =>
-        @_sendResponse(res, {})
-      )
-
-      emulator.get('/api/:userid/groups/:id', (req, res) =>
         deviceId = req.params["id"]
-        @_sendResponse(res, {
-          "error": {
-            "type": 3,
-            "address": req.path,
-            "description": "/groups/#{deviceId} not available."
-          }
-        })
+        device = devices[deviceId]
+        if device
+          payload = @_changeState(device, req.body)
+          @_sendResponse(res, [payload])
+        else
+          env.logger.warn("device with id #{deviceId} not found")
+          @_sendResponse(res, {
+            "error": {
+              "type": 3,
+              "address": req.path,
+              "description": "Light #{deviceId} does not exist."
+            }
+          })
       )
 
     _getHueTemplate: =>
       bridgeIdMac = @_getSNUUIDFromMac()
+      uuidPrefix = '2f402f80-da50-11e1-9b23-'
+
       response = """
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" ?>
 <root xmlns="urn:schemas-upnp-org:device-1-0">
-  <specVersion>
-    <major>1</major>
-    <minor>0</minor>
-  </specVersion>
-  <URLBase>http://#{@ipAddress}:#{@serverPort}/</URLBase>
-  <device>
-    <deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>
-    <friendlyName>Pimatic Hue bridge</friendlyName>
-    <manufacturer>Royal Philips Electronics</manufacturer>
-    <manufacturerURL>http://www.philips.com</manufacturerURL>
-    <modelDescription>Philips hue Personal Wireless Lighting</modelDescription>
-    <modelName>Philips hue bridge 2015</modelName>
-    <modelNumber>BSB002</modelNumber>
-    <modelURL>http://www.meethue.com</modelURL>
-    <serialNumber>#{bridgeIdMac}</serialNumber>
-    <UDN>uuid:2f402f80-da50-11e1-9b23-#{bridgeIdMac}</UDN>
-    <presentationURL>index.html</presentationURL>
-    <iconList>
-      <icon>
-        <mimetype>image/png</mimetype>
-        <height>48</height>
-        <width>48</width>
-        <depth>24</depth>
-        <url>hue_logo_0.png</url>
-      </icon>
-      <icon>
-        <mimetype>image/png</mimetype>
-        <height>120</height>
-        <width>120</width>
-        <depth>24</depth>
-        <url>hue_logo_3.png</url>
-      </icon>
-    </iconList>
-  </device>
+    <specVersion><major>1</major><minor>0</minor></specVersion>
+    <URLBase>http://#{@ipAddress}:#{@serverPort}/</URLBase>
+    <device>
+        <deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>
+        <friendlyName>Philips hue (#{@ipAddress}:#{@serverPort})</friendlyName>
+        <manufacturer>Royal Philips Electronics</manufacturer>
+        <manufacturerURL>http://www.philips.com</manufacturerURL>
+        <modelDescription>Philips hue Personal Wireless Lighting</modelDescription>
+        <modelName>Philips hue bridge 2012</modelName>
+        <modelNumber>929000226503</modelNumber>
+        <modelURL>http://www.meethue.com</modelURL>
+        <serialNumber>#{bridgeIdMac}</serialNumber>
+        <UDN>uuid:#{uuidPrefix}#{bridgeIdMac}</UDN>
+        <presentationURL>index.html</presentationURL>
+    </device>
 </root>
 """
       return response
 
-    _getDeviceResponse: (device) =>
-      return {
-        state: {
-          on: device.state.on,
-          bri: device.state.brightness,
-          alert: "none",
-          reachable: true
-        },
-        type: "Dimmable light",
-        name: device.name,
-        modelid: "LWB007",
-        manufacturername: "pimatic",
-        uniqueid: device.uniqueId,
-        swversion: "66009461"
-      }
+    _getDeviceResponse: (device, trim = false) =>
+      if trim
+        return {
+          type: "Extended color light",
+          name: device.name,
+          uniqueid: device.uniqueId
+        }
+      else
+        return {
+          type: "Extended color light",
+          name: device.name,
+          uniqueid: device.uniqueId,
+          modelid: "LCT015",
+          manufacturername: "Philips",
+          productname: "E4",
+          state: {
+            on: device.state.on,
+            bri: device.state.brightness,
+            xy: [0,0],
+            hue: 0,
+            sat: 0,
+            effect: "none",
+            colormode: "xy",
+            ct: 500,
+            mode: "homeautomation",
+            reachable: true
+          },
+          capabilities: {
+            certified: false,
+            streaming: {
+              renderer: true,
+              proxy: false
+            }
+          }
+          swversion: "5.105.0.21169",
+        }
 
     _toJSON: (json) =>
       return iconv.encode(JSON.stringify(json, null, 2), 'UTF-8')
 
     _sendResponse: (res, payload) =>
-      res.setHeader("Content-Type", "application/json; charset=utf-8")
+      res.setHeader("Content-Type", "application/json")
       res.status(200)
       json = @_toJSON(payload)
       res.send(json)
-      #env.logger.debug("sent response #{json}")
-
-    _authorizeUser: (username, req, res) =>
-      if username == "echo"
-        # convenience user to help analyze problems
-        return true
-      if @pairingEnabled
-        @_addUser(username)
-      if username in users
-        return true
-      else
-        env.logger.debug("Pairing is disabled and user #{username} was not found")
-        res.status(401).send(JSON.stringify({
-          "error": {
-            "type": 1,
-            "address": req.path,
-            "description": "Not Authorized."
-          }
-        }))
-        return false
-
-    _addUser: (username) =>
-      if !username
-        username = uuid().replace(/-/g, '')
-      if username not in users
-        users.push(username)
-        fs.appendFileSync(path.resolve(@storagePath, 'echoUsers'), username + '\n')
-        env.logger.debug("added user #{username}")
-      return username
-
-    _readUsers: () =>
-      if fs.existsSync(path.resolve(@storagePath, 'echoUsers'))
-        return fs.readFileSync(path.resolve(@storagePath, 'echoUsers')).toString().split('\n')
-      return []
+      env.logger.debug("sent response #{json}")
 
     _hash: (str) =>
       hash = 5381

@@ -16,16 +16,15 @@ module.exports = (env) =>
         udpServer.close()
 
       udpServer.on 'message', (msg, rinfo) =>
-        if msg.indexOf('M-SEARCH * HTTP/1.1') == 0 && msg.indexOf('ssdp:discover') > 0
-          if msg.indexOf('ST: urn:schemas-upnp-org:device:basic:1') > 0 || msg.indexOf('ST: upnp:rootdevice') > 0 || msg.indexOf('ST: ssdp:all') > 0
+        if msg.indexOf('M-SEARCH') >= 0
+          if msg.indexOf('ssdp:discover') > 0 || msg.indexOf('upnp:rootdevice') > 0 || msg.indexOf('device:basic:1') > 0
             env.logger.debug "<< server got: #{msg} from #{rinfo.address}:#{rinfo.port}"
-            @_getDiscoveryResponses().forEach((response) =>
-              setTimeout(() =>
-                udpServer.send(response, 0, response.length, rinfo.port, rinfo.address, () =>
-                  env.logger.debug ">> sent response ssdp discovery response: #{response}"
-                )
-              , 650)
-            )
+            setTimeout(() =>
+              response = @_getDiscoveryResponse()
+              udpServer.send(response, 0, response.length, rinfo.port, rinfo.address, () =>
+                env.logger.debug ">> sent response ssdp discovery response: #{response}"
+              )
+            , 650)
             env.logger.debug "complete sending all responses."
 
       udpServer.on 'listening', () =>
@@ -35,47 +34,20 @@ module.exports = (env) =>
 
       udpServer.bind(@upnpPort)
 
-    _getDiscoveryResponses: () =>
+    _getDiscoveryResponse: () =>
       bridgeId = @_getHueBridgeIdFromMac()
       bridgeSNUUID = @_getSNUUIDFromMac()
       uuidPrefix = '2f402f80-da50-11e1-9b23-'
 
-      responses = []
-
       template = "HTTP/1.1 200 OK\r\n" +
-        "HOST: 239.255.255.250:#{@upnpPort}\r\n" +
-        "CACHE-CONTROL: max-age=100\r\n" +
         "EXT:\r\n" +
+        "CACHE-CONTROL: max-age=100\r\n" + # SSDP_INTERVAL
         "LOCATION: http://#{@ipAddress}:#{@serverPort}/description.xml\r\n" +
-        "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.19.0\r\n" +
+        "SERVER: FreeRTOS/6.0.5, UPnP/1.0, IpBridge/1.17.0\r\n" + # _modelName, _modelNumber
         "hue-bridgeid: #{bridgeId}\r\n" +
-        "ST: upnp:rootdevice\r\n" +
-        "USN: uuid:#{uuidPrefix}#{bridgeSNUUID}::upnp:rootdevice\r\n\r\n"
-      responses.push(@_buffer(template))
-
-      template = "HTTP/1.1 200 OK\r\n" +
-        "HOST: 239.255.255.250:#{@upnpPort}\r\n" +
-        "CACHE-CONTROL: max-age=100\r\n" +
-        "EXT:\r\n" +
-        "LOCATION: http://#{@ipAddress}:#{@serverPort}/description.xml\r\n" +
-        "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.19.0\r\n" +
-        "hue-bridgeid: #{bridgeId}\r\n" +
-        "ST: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n" +
-        "USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n"
-      responses.push(@_buffer(template))
-
-      template = "HTTP/1.1 200 OK\r\n" +
-        "HOST: 239.255.255.250:#{@upnpPort}\r\n" +
-        "CACHE-CONTROL: max-age=100\r\n" +
-        "EXT:\r\n" +
-        "LOCATION: http://#{@ipAddress}:#{@serverPort}/description.xml\r\n" +
-        "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.19.0\r\n" +
-        "hue-bridgeid: #{bridgeId}\r\n" +
-        "ST: urn:schemas-upnp-org:device:basic:1\r\n" +
-        "USN: uuid:#{uuidPrefix}#{bridgeSNUUID}\r\n\r\n"
-      responses.push(@_buffer(template))
-
-      return responses
+        "ST: urn:schemas-upnp-org:device:basic:1\r\n" + # _deviceType
+        "USN: uuid:#{uuidPrefix}#{bridgeSNUUID}::upnp:rootdevice\r\n\r\n" # _uuid::_deviceType
+      return @_buffer(template)
 
     _buffer: (template) =>
       if semver.lt(process.version, '6.0.0')
