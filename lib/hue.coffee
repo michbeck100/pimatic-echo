@@ -2,7 +2,6 @@ module.exports = (env) =>
   fs = require('fs')
   uuid = require('uuid/v4')
   path = require('path')
-  iconv = require('iconv-lite')
 
   Promise = env.require('bluebird')
 
@@ -364,7 +363,7 @@ module.exports = (env) =>
           }
 
     _toJSON: (json) =>
-      return iconv.encode(JSON.stringify(json, null, 2), 'UTF-8')
+      return Buffer.from(JSON.stringify(json, null, 2)).toString()
 
     _sendResponse: (res, payload) =>
       res.setHeader("Content-Type", "application/json")

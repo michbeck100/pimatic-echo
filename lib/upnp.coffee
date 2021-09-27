@@ -47,11 +47,6 @@ module.exports = (env) =>
         "hue-bridgeid: #{bridgeId}\r\n" +
         "ST: urn:schemas-upnp-org:device:basic:1\r\n" + # _deviceType
         "USN: uuid:#{uuidPrefix}#{bridgeSNUUID}::upnp:rootdevice\r\n\r\n" # _uuid::_deviceType
-      return @_buffer(template)
-
-    _buffer: (template) =>
-      if semver.lt(process.version, '6.0.0')
-        return new Buffer(template)
       return Buffer.from(template)
 
     _getSNUUIDFromMac: =>
