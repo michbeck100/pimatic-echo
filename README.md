@@ -104,6 +104,13 @@ Do you like this plugin? Then consider a donation to support development.
 <span class="badge-paypal"><a href="https://www.paypal.me/michaelkotten" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
 
 ### Changelog
+0.6.0
+* [#75](https://github.com/michbeck100/pimatic-echo/issues/75) #75 - move to longer unique id as suggested in https://github.com/vintlabs/fauxmoESP/issues/166#issuecomment-803682886
+* pimatic-echo is only compatible with nodejs >= 8
+
+0.5.9
+* use semver legacy for node 4 Michael Kotten 03.05.20, 11:18
+
 0.5.8
 * [#77](https://github.com/michbeck100/pimatic-echo/issues/77) add compatibility with node 4 again
 * add peerDependencies on package.josn again. Hope this fixes the problem that pimatic doesN#t find the update  
