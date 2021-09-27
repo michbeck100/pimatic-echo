@@ -50,6 +50,7 @@ module.exports = (env) =>
       if Object.keys(devices).length < 50
         return (deviceName, buttonId) =>
           uniqueId = ("0" + (Object.keys(devices).length + 1).toString(16)).slice(-2).toUpperCase()
+          uniqueId = @macAddress + ":00:" + uniqueId + "-" + uniqueId
           deviceId = @_hash(deviceName)
           devices[deviceId] = {
             id: deviceId,
@@ -59,10 +60,10 @@ module.exports = (env) =>
             }
             device: device,
             name: deviceName,
-            uniqueId: "00:17:88:5E:D3:" + uniqueId + "-" + uniqueId,
+            uniqueId: uniqueId,
             buttonId: buttonId
           }
-          env.logger.debug("successfully added device #{deviceName} as dimmable light")
+          env.logger.debug("successfully added device #{deviceName} with uniqueId=#{uniqueId}")
       else
         env.logger.warn("Max number of devices exceeded.")
         return () ->
