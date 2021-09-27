@@ -66,7 +66,8 @@ module.exports = (env) =>
             device: device,
             name: deviceName,
             uniqueId: uniqueId,
-            buttonId: buttonId
+            buttonId: buttonId,
+            supportsColor: false # TODO: support color devices
           }
           env.logger.debug("successfully added device #{deviceName} with uniqueId=#{uniqueId}")
       else
@@ -303,41 +304,64 @@ module.exports = (env) =>
       return response
 
     _getDeviceResponse: (device, trim = false) =>
-      if trim
-        return {
-          type: "Extended color light",
-          name: device.name,
-          uniqueid: device.uniqueId
-        }
-      else
-        return {
-          type: "Extended color light",
-          name: device.name,
-          uniqueid: device.uniqueId,
-          modelid: "LCT015",
-          manufacturername: "Philips",
-          productname: "E4",
-          state: {
-            on: device.state.on,
-            bri: device.state.brightness,
-            xy: [0,0],
-            hue: 0,
-            sat: 0,
-            effect: "none",
-            colormode: "xy",
-            ct: 500,
-            mode: "homeautomation",
-            reachable: true
-          },
-          capabilities: {
-            certified: false,
-            streaming: {
-              renderer: true,
-              proxy: false
-            }
+      if device.supportsColor
+        if trim
+          return {
+            type: "Extended color light",
+            name: device.name,
+            uniqueid: device.uniqueId
           }
-          swversion: "5.105.0.21169",
-        }
+        else
+          return {
+            type: "Extended color light",
+            name: device.name,
+            uniqueid: device.uniqueId,
+            modelid: "LCT015",
+            manufacturername: "Philips",
+            productname: "E4",
+            state: {
+              on: device.state.on,
+              bri: device.state.brightness,
+              xy: [0,0],
+              hue: 0,
+              sat: 0,
+              effect: "none",
+              colormode: "xy",
+              ct: 500,
+              mode: "homeautomation",
+              reachable: true
+            },
+            capabilities: {
+              certified: false,
+              streaming: {
+                renderer: true,
+                proxy: false
+              }
+            }
+            swversion: "5.105.0.21169",
+          }
+      else
+        if trim
+          return {
+            type: "Dimmable light",
+            name: device.name,
+            uniqueid: device.uniqueId
+          }
+        else
+          return {
+            state: {
+              on: device.state.on,
+              bri: device.state.brightness,
+              alert: "none",
+              reachable: true
+            },
+            type: "Dimmable light",
+            name: device.name,
+            modelid: "LWB007",
+            manufacturername: "pimatic",
+            uniqueid: device.uniqueId,
+            swversion: "66012040"
+          }
 
     _toJSON: (json) =>
       return iconv.encode(JSON.stringify(json, null, 2), 'UTF-8')
