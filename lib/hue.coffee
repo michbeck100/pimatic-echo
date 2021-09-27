@@ -10,6 +10,10 @@ module.exports = (env) =>
 
   class Hue extends Emulator
 
+    pairingEnabled: false
+
+    users = []
+
     dimmerTemplates: [
       'dimmer',
       'huezlldimmable',
@@ -45,6 +49,7 @@ module.exports = (env) =>
 
     constructor: (@ipAddress, @serverPort, @macAddress, @upnpPort, @config, @storagePath) ->
       super()
+      users = @_readUsers()
 
     addDevice: (device) =>
       if Object.keys(devices).length < 50
@@ -177,27 +182,56 @@ module.exports = (env) =>
         res.status(200).send(@_getHueTemplate())
       )
 
+      emulator.post('/api', (req, res) =>
+        if @pairingEnabled
+          username = @_addUser(req.body.username)
+          @_sendResponse(res, [{
+            success: {
+              username: username
+            }
+          }])
+        else
+          env.logger.debug("Pairing is disabled. Return error response.")
+          @_sendResponse(res, {
+            "error": {
+              "type": 101,
+              "address": req.path,
+              "description": "Not Authorized. Pair button must be pressed to add users."
+            }
+          })
+      )
+
+      emulator.get('/api/:userid', (req, res) =>
+        if @_authorizeUser(req.params["userid"], req, res)
+          lights = {}
+          for id, device of devices
+            lights[id] = @_getDeviceResponse(device)
+          @_sendResponse(res, {lights})
+      )
+
       emulator.get('/api/:userid/lights', (req, res) =>
-        payload = {}
-        for id, device of devices
-          payload[id] = @_getDeviceResponse(device, true)
-        @_sendResponse(res, payload)
+        if @_authorizeUser(req.params["userid"], req, res)
+          payload = {}
+          for id, device of devices
+            payload[id] = @_getDeviceResponse(device, true)
+          @_sendResponse(res, payload)
       )
 
       emulator.get('/api/:userid/lights/:id', (req, res) =>
-        deviceId = req.params["id"]
-        device = devices[deviceId]
-        if device
-          @_sendResponse(res, @_getDeviceResponse(device))
-        else
-          env.logger.warn("device with id #{deviceId} not found")
-          @_sendResponse(res, {
-            "error": {
-              "type": 3,
-              "address": req.path,
-              "description": "Light #{deviceId} does not exist."
-            }
-          })
+        if @_authorizeUser(req.params["userid"], req, res)
+          deviceId = req.params["id"]
+          device = devices[deviceId]
+          if device
+            @_sendResponse(res, @_getDeviceResponse(device))
+          else
+            env.logger.warn("device with id #{deviceId} not found")
+            @_sendResponse(res, {
+              "error": {
+                "type": 3,
+                "address": req.path,
+                "description": "Light #{deviceId} does not exist."
+              }
+            })
       )
 
       emulator.post('/api', (req, res) =>
@@ -210,20 +244,36 @@ module.exports = (env) =>
       )
 
       emulator.put('/api/:userid/lights/:id/state', (req, res) =>
+        if @_authorizeUser(req.params["userid"], req, res)
+          deviceId = req.params["id"]
+          device = devices[deviceId]
+          if device
+            payload = @_changeState(device, req.body)
+            @_sendResponse(res, [payload])
+          else
+            env.logger.warn("device with id #{deviceId} not found")
+            @_sendResponse(res, {
+              "error": {
+                "type": 3,
+                "address": req.path,
+                "description": "Light #{deviceId} does not exist."
+              }
+            })
+      )
+
+      emulator.get('/api/:userid/groups', (req, res) =>
+        @_sendResponse(res, {})
+      )
+
+      emulator.get('/api/:userid/groups/:id', (req, res) =>
         deviceId = req.params["id"]
-        device = devices[deviceId]
-        if device
-          payload = @_changeState(device, req.body)
-          @_sendResponse(res, [payload])
-        else
-          env.logger.warn("device with id #{deviceId} not found")
-          @_sendResponse(res, {
-            "error": {
-              "type": 3,
-              "address": req.path,
-              "description": "Light #{deviceId} does not exist."
-            }
-          })
+        @_sendResponse(res, {
+          "error": {
+            "type": 3,
+            "address": req.path,
+            "description": "/groups/#{deviceId} not available."
+          }
+        })
       )
 
     _getHueTemplate: =>
@@ -298,6 +348,39 @@ module.exports = (env) =>
       json = @_toJSON(payload)
       res.send(json)
       env.logger.debug("sent response #{json}")
+
+    _authorizeUser: (username, req, res) =>
+      if username == "echo"
+        # convenience user to help analyze problems
+        return true
+      if @pairingEnabled
+        @_addUser(username)
+      if username in users
+        return true
+      else
+        env.logger.debug("Pairing is disabled and user #{username} was not found")
+        res.status(401).send(JSON.stringify({
+          "error": {
+            "type": 1,
+            "address": req.path,
+            "description": "Not Authorized."
+          }
+        }))
+        return false
+
+    _addUser: (username) =>
+      if !username
+        username = uuid().replace(/-/g, '')
+      if username not in users
+        users.push(username)
+        fs.appendFileSync(path.resolve(@storagePath, 'echoUsers'), username + '\n')
+        env.logger.debug("added user #{username}")
+      return username
+
+    _readUsers: () =>
+      if fs.existsSync(path.resolve(@storagePath, 'echoUsers'))
+        return fs.readFileSync(path.resolve(@storagePath, 'echoUsers')).toString().split('\n')
+      return []
 
     _hash: (str) =>
       hash = 5381
